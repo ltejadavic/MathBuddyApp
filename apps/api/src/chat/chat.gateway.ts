@@ -64,10 +64,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.userSockets.set(userId, sockets);
     }
 
+    // Join personal room to receive background notifications
+    client.join(`user_${userId}`);
+
     // Broadcast online status
     this.server.emit('presence_update', { userId, status: 'ONLINE' });
+    
+    // Get all online users to send back to the connected client
+    const onlineUsers = Array.from(this.userSockets.keys());
 
-    return { status: 'authenticated', userId };
+    return { status: 'authenticated', userId, onlineUsers };
   }
 
   @UseGuards(WsJwtGuard)
@@ -91,8 +97,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Save message to DB
     const message = await this.chatService.saveMessage(userId, payload);
 
-    // Broadcast to everyone in the thread (including sender)
-    this.server.to(payload.threadId).emit('new_message', message);
+    // Get thread participants to notify them even if they haven't joined the thread room actively
+    const participants = await this.chatService.getThreadParticipants(payload.threadId);
+    const rooms = [payload.threadId];
+    if (participants) {
+      participants.forEach(p => rooms.push(`user_${p.userId}`));
+    }
+
+    // Broadcast to everyone in the thread and their personal rooms (including sender)
+    this.server.to(rooms).emit('new_message', message);
 
     return { status: 'sent', message };
   }
@@ -111,5 +124,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       userId,
       isTyping: data.isTyping,
     });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('mark_read')
+  async handleMarkRead(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() threadId: string,
+  ) {
+    const userId = client.data.user.id;
+    await this.chatService.markThreadAsRead(threadId, userId);
   }
 }

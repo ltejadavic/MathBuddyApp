@@ -145,4 +145,39 @@ export class UsersService {
       data: { deletedAt: new Date() },
     });
   }
+
+  async getPublicProfile(targetId: string, requesterId: string) {
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      include: {
+        studentProfile: true,
+        teacherProfile: {
+          include: { courses: { include: { course: true } } }
+        },
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const requester = await this.prisma.user.findUnique({
+      where: { id: requesterId },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, refreshTokenHash, email, ...publicData } = targetUser;
+    
+    let returnedEmail = email;
+
+    // Role-specific data exposure
+    if (requester?.role !== Role.ADMIN) {
+      // Non-admins shouldn't see student emails for privacy
+      if (targetUser.role === Role.STUDENT) {
+        returnedEmail = 'Hidden for privacy';
+      }
+    }
+
+    return { ...publicData, email: returnedEmail };
+  }
 }

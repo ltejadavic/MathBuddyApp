@@ -6,22 +6,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Video, CheckCircle2 } from "lucide-react";
+import { Edit, Video, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useMyTeacherSessions, useUpdateSession } from "@/hooks/use-teacher-data";
+import { format } from "date-fns";
 
 export default function TeacherClassesPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedClass, setSelectedClass] = useState<any>(null);
+  const [meetingLink, setMeetingLink] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const upcomingClasses = [
-    { id: 1, student: "Alice Smith", course: "SAT Math Prep", date: "Aug 5, 2026", time: "4:00 PM", status: "PENDING_LINK" },
-    { id: 2, student: "Bob Johnson", course: "IB Physics", date: "Aug 6, 2026", time: "6:00 PM", status: "READY" },
-  ];
+  const { data: sessions, isLoading } = useMyTeacherSessions();
+  const updateSession = useUpdateSession();
 
-  const pastClasses = [
-    { id: 3, student: "Alice Smith", course: "SAT Math Prep", date: "Jul 28, 2026", time: "4:00 PM", status: "COMPLETED", duration: "1.5h" },
-    { id: 4, student: "Bob Johnson", course: "IB Physics", date: "Jul 25, 2026", time: "6:00 PM", status: "PENDING_EVALUATION", duration: "1.0h" },
-  ];
+  const upcomingClasses = sessions?.filter((s: any) => new Date(s.scheduledStartTime) >= new Date() || s.status === 'SCHEDULED') || [];
+  const pastClasses = sessions?.filter((s: any) => s.status === 'COMPLETED' || (new Date(s.scheduledStartTime) < new Date() && s.status !== 'SCHEDULED')) || [];
+
+  if (isLoading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>;
+
+
 
   return (
     <div className="space-y-6">
@@ -52,13 +55,18 @@ export default function TeacherClassesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {upcomingClasses.map((cls) => (
+                {upcomingClasses.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">No upcoming classes.</TableCell>
+                  </TableRow>
+                )}
+                {upcomingClasses.map((cls: any) => (
                   <TableRow key={cls.id}>
-                    <TableCell className="font-medium">{cls.date} - {cls.time}</TableCell>
-                    <TableCell>{cls.student}</TableCell>
-                    <TableCell>{cls.course}</TableCell>
+                    <TableCell className="font-medium">{format(new Date(cls.scheduledStartTime), "MMM d, yyyy")} - {format(new Date(cls.scheduledStartTime), "h:mm a")}</TableCell>
+                    <TableCell>{cls.student?.user?.firstName || "Student"} {cls.student?.user?.lastName}</TableCell>
+                    <TableCell>{cls.course?.name}</TableCell>
                     <TableCell>
-                      {cls.status === 'PENDING_LINK' ? (
+                      {!cls.meetingLink ? (
                         <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                           Link Required
                         </span>
@@ -70,7 +78,10 @@ export default function TeacherClassesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Dialog>
-                        <DialogTrigger render={<Button variant="outline" size="sm" onClick={() => setSelectedClass(cls)} />}>
+                        <DialogTrigger render={<Button variant="outline" size="sm" nativeButton={false} onClick={() => {
+                          setSelectedClass(cls);
+                          setMeetingLink(cls.meetingLink || "");
+                        }} />}>
                           <Video className="w-4 h-4 mr-2" />
                           Update Link
                         </DialogTrigger>
@@ -78,17 +89,25 @@ export default function TeacherClassesPage() {
                           <DialogHeader>
                             <DialogTitle>Update Meeting Link</DialogTitle>
                             <DialogDescription>
-                              Set the Zoom or Google Meet link for {selectedClass?.student}&apos;s session.
+                              Set the Zoom or Google Meet link for this session.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4 py-4">
                             <div className="space-y-2">
                               <Label>Meeting URL</Label>
-                              <Input placeholder="https://zoom.us/j/..." />
+                              <Input placeholder="https://zoom.us/j/..." value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} />
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button className="bg-brand-cyan hover:bg-brand-cyan/90 text-white">Save Link</Button>
+                            <Button 
+                              className="bg-brand-cyan hover:bg-brand-cyan/90 text-white"
+                              onClick={() => {
+                                updateSession.mutate({ sessionId: selectedClass.id, meetingLink });
+                              }}
+                              disabled={updateSession.isPending}
+                            >
+                              {updateSession.isPending ? "Saving..." : "Save Link"}
+                            </Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -119,12 +138,17 @@ export default function TeacherClassesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pastClasses.map((cls) => (
+                {pastClasses.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">No past classes.</TableCell>
+                  </TableRow>
+                )}
+                {pastClasses.map((cls: any) => (
                   <TableRow key={cls.id}>
-                    <TableCell className="font-medium">{cls.date}</TableCell>
-                    <TableCell>{cls.student}</TableCell>
-                    <TableCell>{cls.course}</TableCell>
-                    <TableCell>{cls.duration}</TableCell>
+                    <TableCell className="font-medium">{format(new Date(cls.scheduledStartTime), "MMM d, yyyy")}</TableCell>
+                    <TableCell>{cls.student?.user?.firstName || "Student"} {cls.student?.user?.lastName}</TableCell>
+                    <TableCell>{cls.course?.name}</TableCell>
+                    <TableCell>1.0h</TableCell>
                     <TableCell className="text-right">
                       {cls.status === 'COMPLETED' ? (
                         <span className="inline-flex items-center text-green-600 dark:text-green-400 text-sm font-medium">
@@ -132,7 +156,10 @@ export default function TeacherClassesPage() {
                         </span>
                       ) : (
                         <Dialog>
-                          <DialogTrigger render={<Button variant="default" size="sm" className="bg-yellow-500 hover:bg-yellow-600 text-white" onClick={() => setSelectedClass(cls)} />}>
+                          <DialogTrigger render={<Button variant="default" size="sm" nativeButton={false} className="bg-yellow-500 hover:bg-yellow-600 text-white" onClick={() => {
+                            setSelectedClass(cls);
+                            setNotes(cls.notes || "");
+                          }} />}>
                             <Edit className="w-4 h-4 mr-2" />
                             Evaluate
                           </DialogTrigger>
@@ -140,7 +167,7 @@ export default function TeacherClassesPage() {
                             <DialogHeader>
                               <DialogTitle>Class Evaluation</DialogTitle>
                               <DialogDescription>
-                                Finalize details for {selectedClass?.student}&apos;s session.
+                                Finalize details for this session.
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
@@ -149,16 +176,20 @@ export default function TeacherClassesPage() {
                                 <Input type="number" step="0.5" defaultValue="1.0" />
                               </div>
                               <div className="space-y-2">
-                                <Label>Topics Covered</Label>
-                                <Input placeholder="e.g. Kinematics, Newton's Laws" />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Private Notes (Admin only)</Label>
-                                <Input placeholder="Notes about student behavior..." />
+                                <Label>Topics Covered / Notes</Label>
+                                <Input placeholder="e.g. Kinematics, Newton's Laws" value={notes} onChange={(e) => setNotes(e.target.value)} />
                               </div>
                             </div>
                             <DialogFooter>
-                              <Button className="bg-brand-cyan hover:bg-brand-cyan/90 text-white">Submit Evaluation</Button>
+                              <Button 
+                                className="bg-brand-cyan hover:bg-brand-cyan/90 text-white"
+                                onClick={() => {
+                                  updateSession.mutate({ sessionId: selectedClass.id, status: "COMPLETED", notes });
+                                }}
+                                disabled={updateSession.isPending}
+                              >
+                                {updateSession.isPending ? "Submitting..." : "Submit Evaluation"}
+                              </Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>

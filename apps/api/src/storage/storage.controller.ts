@@ -36,6 +36,11 @@ export class StorageController {
     return this.storageService.getResourcesByCourse(courseId);
   }
 
+  @Get('resources/my-files')
+  async getMyResources(@Request() req: any) {
+    return this.storageService.getMyResources(req.user.id);
+  }
+
   @Get('resources/:id/download')
   async generateDownloadUrl(
     @Request() req: any,

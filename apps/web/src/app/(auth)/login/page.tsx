@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +30,13 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  useEffect(() => {
+    const user = useAuthStore.getState().user;
+    if (user?.role) {
+      router.replace(`/${user.role.toLowerCase()}`);
+    }
+  }, [router]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);

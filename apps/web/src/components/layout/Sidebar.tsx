@@ -13,7 +13,9 @@ import {
   CalendarDays,
   History,
   FolderOpen,
-  UserCircle
+  UserCircle,
+  MessageCircle,
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +31,10 @@ export function SidebarContent() {
     { name: "Academic Setup", href: "/admin/academic", icon: BookOpen },
     { name: "Schedule", href: "/admin/schedule", icon: Calendar },
     { name: "Financials", href: "/admin/financials", icon: Wallet },
+    { name: "Students", href: "/admin/students", icon: Users },
+    { name: "Teachers", href: "/admin/teachers", icon: Users },
+    { name: "Staff", href: "/admin/staff", icon: Briefcase },
+    { name: "Messages", href: "/messages", icon: MessageCircle },
   ];
 
   const teacherLinks = [
@@ -37,6 +43,10 @@ export function SidebarContent() {
     { name: "Classes", href: "/teacher/classes", icon: BookOpen },
     { name: "Resources", href: "/teacher/resources", icon: FolderOpen },
     { name: "Earnings", href: "/teacher/earnings", icon: Wallet },
+    { name: "Students", href: "/teacher/students", icon: Users },
+    { name: "Teachers", href: "/teacher/teachers", icon: Users },
+    { name: "Staff", href: "/teacher/staff", icon: Briefcase },
+    { name: "Messages", href: "/messages", icon: MessageCircle },
   ];
 
   const studentLinks = [
@@ -45,6 +55,9 @@ export function SidebarContent() {
     { name: "Class History", href: "/student/history", icon: History },
     { name: "Resources", href: "/student/resources", icon: FolderOpen },
     { name: "Profile", href: "/student/profile", icon: UserCircle },
+    { name: "My Teachers", href: "/student/teachers", icon: Users },
+    { name: "Staff", href: "/student/staff", icon: Briefcase },
+    { name: "Messages", href: "/messages", icon: MessageCircle },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

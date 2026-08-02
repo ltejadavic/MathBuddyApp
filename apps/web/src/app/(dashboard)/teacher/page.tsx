@@ -6,21 +6,23 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Users, CalendarDays, ExternalLink, Video } from "lucide-react";
 import Link from "next/link";
 
+import { useMyTeacherSessions } from "@/hooks/use-teacher-data";
+import { format } from "date-fns";
+
 export default function TeacherDashboardPage() {
   const { user } = useAuthStore();
   const teacherName = user?.email?.split("@")[0] || "Teacher";
+  
+  const { data: sessions, isLoading } = useMyTeacherSessions();
 
-  // Mock data
+  // Mock metrics since we don't have dedicated endpoints for these yet
   const metrics = [
-    { title: "Classes This Week", value: "12", icon: CalendarDays, color: "text-brand-cyan" },
-    { title: "Total Students", value: "28", icon: Users, color: "text-green-500" },
-    { title: "Pending Evaluations", value: "3", icon: BookOpen, color: "text-yellow-500" },
+    { title: "Classes This Week", value: sessions?.length || 0, icon: CalendarDays, color: "text-brand-cyan" },
+    { title: "Total Students", value: "--", icon: Users, color: "text-green-500" },
+    { title: "Pending Evaluations", value: "--", icon: BookOpen, color: "text-yellow-500" },
   ];
 
-  const todaysClasses = [
-    { id: 1, student: "Alice Smith", course: "SAT Math Prep", time: "4:00 PM - 5:30 PM", link: "https://zoom.us/j/123" },
-    { id: 2, student: "Bob Johnson", course: "IB Physics", time: "6:00 PM - 7:00 PM", link: "https://zoom.us/j/456" },
-  ];
+  const todaysClasses = sessions?.filter((s: any) => new Date(s.scheduledStartTime) >= new Date()) || [];
 
   return (
     <div className="space-y-6">
@@ -61,19 +63,21 @@ export default function TeacherDashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {todaysClasses.map((cls) => (
+            {todaysClasses.map((cls: any) => (
               <div key={cls.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-lg gap-4">
                 <div>
-                  <p className="font-semibold">{cls.course}</p>
-                  <p className="text-sm text-muted-foreground">{cls.time} • Student: {cls.student}</p>
+                  <p className="font-semibold">{cls.course?.name || "Course"}</p>
+                  <p className="text-sm text-muted-foreground">{format(new Date(cls.scheduledStartTime), "h:mm a")} • Student: {cls.student?.user?.firstName || "Student"}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" render={<Link href="/teacher/classes" />} nativeButton={false}>
                     Manage
                   </Button>
-                  <Button size="sm" className="bg-brand-cyan hover:bg-brand-cyan/90 text-white" render={<a href={cls.link} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
-                    Start Class <ExternalLink className="w-4 h-4 ml-2" />
-                  </Button>
+                  {cls.meetingLink && (
+                    <Button size="sm" className="bg-brand-cyan hover:bg-brand-cyan/90 text-white" render={<a href={cls.meetingLink} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
+                      Start Class <ExternalLink className="w-4 h-4 ml-2" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

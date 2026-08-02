@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
 import { LogOut, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SidebarContent } from "./Sidebar";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
@@ -39,10 +39,10 @@ export function Navbar() {
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 md:px-6">
       <div className="flex items-center gap-4 flex-1">
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden shrink-0" />}>
+          <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setOpen(true)}>
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
-          </SheetTrigger>
+          </Button>
           <SheetContent side="left" className="p-0 w-64">
             <div className="flex flex-col h-full bg-white dark:bg-gray-900">
               <SidebarContent />

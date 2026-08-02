@@ -120,6 +120,16 @@ export class StorageService {
     });
   }
 
+  async getMyResources(userId: string) {
+    return this.prisma.resource.findMany({
+      where: { uploaderId: userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        course: { select: { id: true, name: true } },
+      },
+    });
+  }
+
   async deleteResource(userId: string, resourceId: string, userRole: string) {
     const resource = await this.prisma.resource.findUnique({
       where: { id: resourceId },

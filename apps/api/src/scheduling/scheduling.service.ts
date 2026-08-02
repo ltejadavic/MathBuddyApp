@@ -54,13 +54,25 @@ export class SchedulingService {
     return session;
   }
 
-  async getSessions(): Promise<any> {
+  async getSessions(query?: { studentId?: string; teacherId?: string }): Promise<any> {
+    const where: any = {};
+    if (query?.teacherId) {
+      where.teacherId = query.teacherId;
+    }
+    if (query?.studentId) {
+      where.attendances = {
+        some: { studentId: query.studentId },
+      };
+    }
+
     return this.prisma.classSession.findMany({
+      where,
       include: {
         teacher: { include: { user: true } },
-        course: true,
+        course: { include: { program: true } },
         attendances: { include: { student: { include: { user: true } } } },
       },
+      orderBy: { scheduledStartTime: 'asc' },
     });
   }
 

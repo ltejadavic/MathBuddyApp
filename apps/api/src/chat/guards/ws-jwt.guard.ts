@@ -25,7 +25,7 @@ export class WsJwtGuard implements CanActivate {
 
     try {
       const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET || 'fallback_secret',
+        secret: process.env.JWT_SECRET || 'super-secret-default-key-for-dev',
       });
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },

@@ -2,17 +2,25 @@
 
 import { useAuthStore } from "@/store/auth-store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, GraduationCap, DollarSign, Clock, Activity } from "lucide-react";
+import { Users, GraduationCap, DollarSign, Clock, Activity, BookOpen } from "lucide-react";
+import { useFinancialSummary, useAllUsers, useAllPrograms } from "@/hooks/use-admin-data";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function AdminDashboardPage() {
   const { user } = useAuthStore();
   const adminName = user?.email?.split("@")[0] || "Admin";
 
+  const { data: users } = useAllUsers();
+  const { data: programs } = useAllPrograms();
+  const { data: financials, isLoading } = useFinancialSummary();
+
+  const totalUsers = users?.length || 0;
+  const activePrograms = programs?.length || 0;
+
   const metrics = [
-    { title: "Active Students", value: "142", icon: Users, color: "text-brand-cyan", bg: "bg-brand-cyan/10" },
-    { title: "Active Teachers", value: "18", icon: GraduationCap, color: "text-purple-600", bg: "bg-purple-100 dark:bg-purple-900/30" },
-    { title: "Monthly Revenue", value: "$4,250", icon: DollarSign, color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30" },
+    { title: "Total Users", value: totalUsers.toString(), icon: Users, color: "text-brand-cyan", bg: "bg-brand-cyan/10" },
+    { title: "Active Programs", value: activePrograms.toString(), icon: BookOpen, color: "text-purple-600", bg: "bg-purple-100 dark:bg-purple-900/30" },
+    { title: "Total Revenue", value: isLoading ? "..." : `$${financials?.revenue || 0}`, icon: DollarSign, color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30" },
     { title: "Hours Consumed", value: "320h", icon: Clock, color: "text-orange-500", bg: "bg-orange-100 dark:bg-orange-900/30" },
   ];
 

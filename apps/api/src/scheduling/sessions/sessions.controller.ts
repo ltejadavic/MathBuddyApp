@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { SchedulingService } from '../scheduling.service';
 import {
@@ -24,15 +25,15 @@ import { Role } from '@math-buddy/database';
 export class SessionsController {
   constructor(private readonly schedulingService: SchedulingService) {}
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.STUDENT)
   @Post()
   async create(@Body() createSessionDto: CreateSessionDto): Promise<any> {
     return this.schedulingService.createSession(createSessionDto);
   }
 
   @Get()
-  async findAll(): Promise<any> {
-    return this.schedulingService.getSessions();
+  async findAll(@Query('studentId') studentId?: string, @Query('teacherId') teacherId?: string): Promise<any> {
+    return this.schedulingService.getSessions({ studentId, teacherId });
   }
 
   @Get(':id')

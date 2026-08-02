@@ -3,19 +3,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, BookOpen } from "lucide-react";
+import { Plus, BookOpen, Loader2 } from "lucide-react";
+import { useAllPrograms, useAllCourses } from "@/hooks/use-admin-data";
 
 export default function AdminAcademicPage() {
-  const programs = [
-    { id: 1, name: "SAT Preparation", courses: 2, status: "Active" },
-    { id: 2, name: "IB Diploma", courses: 5, status: "Active" },
-    { id: 3, name: "University Level", courses: 3, status: "Active" },
-  ];
+  const { data: programs, isLoading: isLoadingPrograms } = useAllPrograms();
+  const { data: courses, isLoading: isLoadingCourses } = useAllCourses();
 
-  const teacherAssignments = [
-    { id: 1, teacher: "Mr. Davis", courses: ["SAT Math Prep", "IB Physics"] },
-    { id: 2, teacher: "Ms. Robinson", courses: ["SAT Verbal", "IB English"] },
-  ];
+  // Basic aggregation for MVP
+  const programList = programs || [];
+  const courseList = courses || [];
 
   return (
     <div className="space-y-6">
@@ -43,28 +40,26 @@ export default function AdminAcademicPage() {
             </Button>
           </CardHeader>
           <CardContent>
+            {isLoadingPrograms ? (
+              <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
+            ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Program Name</TableHead>
-                  <TableHead>Courses</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Description</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {programs.map((prog) => (
+                {programList.map((prog: any) => (
                   <TableRow key={prog.id}>
                     <TableCell className="font-medium">{prog.name}</TableCell>
-                    <TableCell>{prog.courses}</TableCell>
-                    <TableCell>
-                      <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">
-                        {prog.status}
-                      </span>
-                    </TableCell>
+                    <TableCell>{prog.description}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -80,30 +75,26 @@ export default function AdminAcademicPage() {
             </Button>
           </CardHeader>
           <CardContent>
+            {isLoadingCourses ? (
+              <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
+            ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead>Authorized Courses</TableHead>
+                  <TableHead>Course Name</TableHead>
+                  <TableHead>Program</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teacherAssignments.map((assignment) => (
-                  <TableRow key={assignment.id}>
-                    <TableCell className="font-medium">{assignment.teacher}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {assignment.courses.map(course => (
-                          <span key={course} className="text-xs px-2 py-1 bg-brand-cyan/10 text-brand-cyan rounded-md">
-                            {course}
-                          </span>
-                        ))}
-                      </div>
-                    </TableCell>
+                {courseList.map((course: any) => (
+                  <TableRow key={course.id}>
+                    <TableCell className="font-medium">{course.name}</TableCell>
+                    <TableCell>{course.program?.name}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            )}
           </CardContent>
         </Card>
       </div>

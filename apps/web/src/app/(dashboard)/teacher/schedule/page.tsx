@@ -2,14 +2,36 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMyAvailability, useUpdateAvailability } from "@/hooks/use-teacher-data";
+import { Loader2 } from "lucide-react";
 
 export default function TeacherSchedulePage() {
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const hours = ["08:00 AM", "10:00 AM", "12:00 PM", "02:00 PM", "04:00 PM", "06:00 PM", "08:00 PM"];
 
-  // Mock selected state
-  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set(["Monday-04:00 PM", "Wednesday-06:00 PM"]));
+  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
+
+  const { data: availabilities, isLoading } = useMyAvailability();
+  const updateAvailability = useUpdateAvailability();
+
+  useEffect(() => {
+    if (availabilities) {
+      const newSlots = new Set<string>();
+      availabilities.forEach((av: any) => {
+        const day = days[av.dayOfWeek];
+        // Match hour, e.g. "09:00" to "09:00 AM". Simple matching for MVP.
+        const hour = hours.find(h => {
+          const hh = parseInt(h.split(":")[0]);
+          const isPM = h.includes("PM");
+          const military = (isPM && hh !== 12 ? hh + 12 : (hh === 12 && !isPM ? 0 : hh)).toString().padStart(2, "0");
+          return av.startTime.startsWith(military);
+        });
+        if (hour) newSlots.add(`${day}-${hour}`);
+      });
+      setSelectedSlots(newSlots);
+    }
+  }, [availabilities]);
 
   const toggleSlot = (day: string, hour: string) => {
     const key = `${day}-${hour}`;
@@ -20,6 +42,22 @@ export default function TeacherSchedulePage() {
       newSlots.add(key);
     }
     setSelectedSlots(newSlots);
+  };
+
+  const handleSave = () => {
+    const payload = Array.from(selectedSlots).map(slot => {
+      const [day, hour] = slot.split("-");
+      const dayOfWeek = days.indexOf(day);
+      const hh = parseInt(hour.split(":")[0]);
+      const isPM = hour.includes("PM");
+      const military = (isPM && hh !== 12 ? hh + 12 : (hh === 12 && !isPM ? 0 : hh)).toString().padStart(2, "0");
+      const startTime = `${military}:00`;
+      const endTime = `${military}:59`;
+      return { dayOfWeek, startTime, endTime, timeZone: "America/Lima" };
+    });
+    updateAvailability.mutate(payload, {
+      onSuccess: () => alert("Availability saved! (Note: duplicates may throw errors in MVP without a bulk overwrite API)")
+    });
   };
 
   return (
@@ -33,7 +71,12 @@ export default function TeacherSchedulePage() {
             Set your weekly recurring availability for students to book classes.
           </p>
         </div>
-        <Button className="bg-brand-cyan hover:bg-brand-cyan/90 text-white">
+        <Button 
+          className="bg-brand-cyan hover:bg-brand-cyan/90 text-white" 
+          onClick={handleSave}
+          disabled={updateAvailability.isPending}
+        >
+          {updateAvailability.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Save Availability
         </Button>
       </div>
@@ -44,6 +87,9 @@ export default function TeacherSchedulePage() {
           <CardDescription>Click on the slots to mark yourself as available.</CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
+          ) : (
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               {/* Grid Header */}
@@ -84,6 +130,7 @@ export default function TeacherSchedulePage() {
               </div>
             </div>
           </div>
+          )}
         </CardContent>
       </Card>
     </div>

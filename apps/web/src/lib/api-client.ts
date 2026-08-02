@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/auth-store';
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL: '/api',
   withCredentials: true, // Important for sending/receiving HttpOnly cookies
 });
 

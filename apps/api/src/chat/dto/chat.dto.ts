@@ -6,8 +6,8 @@ export class SendMessageDto {
   threadId: string;
 
   @IsString()
-  @IsNotEmpty()
-  content: string;
+  @IsOptional()
+  content?: string;
 
   @IsString()
   @IsOptional()

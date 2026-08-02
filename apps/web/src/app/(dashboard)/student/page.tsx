@@ -2,29 +2,38 @@
 
 import { useAuthStore } from "@/store/auth-store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, BookOpen, GraduationCap } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, BookOpen, GraduationCap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useMyProfile, useMySessions } from "@/hooks/use-student-data";
+import { format } from "date-fns";
 
 export default function StudentDashboardPage() {
   const user = useAuthStore((state) => state.user);
+  
+  const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
+  const { data: sessions, isLoading: isLoadingSessions } = useMySessions();
 
-  // Mock data for now until backend is connected
-  const studentData = {
-    firstName: user?.email?.split("@")[0] || "Student",
-    remainingHours: 12.5,
-    upcomingClasses: [
-      { id: 1, title: "SAT Math Prep", teacher: "Mr. Smith", date: "Today, 4:00 PM", duration: "1.5 hrs" },
-      { id: 2, title: "IB Physics", teacher: "Ms. Johnson", date: "Tomorrow, 5:30 PM", duration: "1 hr" }
-    ]
-  };
+  if (isLoadingProfile || isLoadingSessions) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-cyan" />
+      </div>
+    );
+  }
+
+  const studentProfile = profile?.studentProfile;
+  const remainingHours = studentProfile?.remainingMinutes ? (studentProfile.remainingMinutes / 60).toFixed(1) : "0.0";
+  
+  const upcomingClasses = sessions?.filter((s: any) => new Date(s.scheduledStartTime) >= new Date()).slice(0, 3) || [];
+  const completedClasses = sessions?.filter((s: any) => s.status === 'COMPLETED') || [];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white capitalize">
-            Welcome back, {studentData.firstName}!
+            Welcome back, {profile?.firstName || user?.email?.split("@")[0]}!
           </h2>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Here&apos;s an overview of your academic progress and upcoming schedule.
@@ -43,7 +52,7 @@ export default function StudentDashboardPage() {
             <Clock className="h-4 w-4 text-brand-cyan" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{studentData.remainingHours} hrs</div>
+            <div className="text-2xl font-bold">{remainingHours} hrs</div>
             <p className="text-xs text-muted-foreground">
               From your active packages
             </p>
@@ -56,7 +65,7 @@ export default function StudentDashboardPage() {
             <CalendarIcon className="h-4 w-4 text-brand-cyan" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{upcomingClasses.length + completedClasses.length}</div>
             <p className="text-xs text-muted-foreground">
               1 completed, 2 upcoming
             </p>
@@ -100,18 +109,25 @@ export default function StudentDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {studentData.upcomingClasses.map(cls => (
-                <div key={cls.id} className="flex items-start justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-gray-50/50 dark:bg-gray-900/50">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">{cls.title}</p>
-                    <p className="text-sm text-muted-foreground">with {cls.teacher}</p>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <p className="text-sm font-medium text-brand-cyan">{cls.date}</p>
-                    <p className="text-xs text-muted-foreground">{cls.duration}</p>
-                  </div>
-                </div>
-              ))}
+              {upcomingClasses.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No upcoming classes scheduled.</p>
+              ) : (
+                upcomingClasses.map((cls: any) => {
+                  const durationMins = (new Date(cls.scheduledEndTime).getTime() - new Date(cls.scheduledStartTime).getTime()) / 60000;
+                  return (
+                    <div key={cls.id} className="flex items-start justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-gray-50/50 dark:bg-gray-900/50">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">{cls.course?.name || "Class"}</p>
+                        <p className="text-sm text-muted-foreground">with {cls.teacher?.user?.firstName || "Teacher"}</p>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <p className="text-sm font-medium text-brand-cyan">{format(new Date(cls.scheduledStartTime), "MMM d, h:mm a")}</p>
+                        <p className="text-xs text-muted-foreground">{durationMins / 60} hr{durationMins > 60 ? "s" : ""}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
             <Button variant="outline" className="w-full mt-4 rounded-xl" render={<Link href="/student/schedule" />} nativeButton={false}>
               View Full Schedule
