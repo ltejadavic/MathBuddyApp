@@ -1,73 +1,91 @@
 "use client";
 
-import React, { useState } from 'react';
-import { StatCard } from '../../../components/dashboard/StatCard';
-
-interface ClassSession {
-  id: string;
-  date: string;
-  time: string;
-  student: string;
-  course: string;
-}
-
-interface TeacherMetrics {
-  pendingEarningsCents: number;
-  totalEarningsCents: number;
-  upcomingClasses: ClassSession[];
-}
+import { useAuthStore } from "@/store/auth-store";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Users, CalendarDays, ExternalLink, Video } from "lucide-react";
+import Link from "next/link";
 
 export default function TeacherDashboardPage() {
-  const [metrics] = useState<TeacherMetrics>({
-    pendingEarningsCents: 15000,
-    totalEarningsCents: 450000,
-    upcomingClasses: [
-      { id: '1', date: '2026-08-05', time: '10:00 AM', student: 'John Doe', course: 'SAT Math' },
-      { id: '2', date: '2026-08-06', time: '02:00 PM', student: 'Jane Smith', course: 'IB Physics' },
-    ],
-  });
+  const { user } = useAuthStore();
+  const teacherName = user?.email?.split("@")[0] || "Teacher";
 
-  if (!metrics) return <div>Loading...</div>;
+  // Mock data
+  const metrics = [
+    { title: "Classes This Week", value: "12", icon: CalendarDays, color: "text-brand-cyan" },
+    { title: "Total Students", value: "28", icon: Users, color: "text-green-500" },
+    { title: "Pending Evaluations", value: "3", icon: BookOpen, color: "text-yellow-500" },
+  ];
+
+  const todaysClasses = [
+    { id: 1, student: "Alice Smith", course: "SAT Math Prep", time: "4:00 PM - 5:30 PM", link: "https://zoom.us/j/123" },
+    { id: 2, student: "Bob Johnson", course: "IB Physics", time: "6:00 PM - 7:00 PM", link: "https://zoom.us/j/456" },
+  ];
 
   return (
-    <div className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Teacher Dashboard</h1>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard 
-          title="Pending Earnings" 
-          value={`$${(metrics.pendingEarningsCents / 100).toFixed(2)}`} 
-          description="Ready for next payout"
-        />
-        <StatCard 
-          title="Total Earnings" 
-          value={`$${(metrics.totalEarningsCents / 100).toFixed(2)}`} 
-          description="Lifetime earnings"
-        />
-        <StatCard 
-          title="Upcoming Classes" 
-          value={metrics.upcomingClasses.length} 
-          description="Next 7 days"
-        />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+          Welcome back, {teacherName}!
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+          Here is your schedule and pending tasks for today.
+        </p>
       </div>
 
-      <div className="mt-8 rounded-xl border bg-card text-card-foreground shadow p-6">
-        <h3 className="text-lg font-medium mb-4">Upcoming Classes</h3>
-        <div className="space-y-4">
-          {metrics.upcomingClasses.map((cls: ClassSession) => (
-            <div key={cls.id} className="flex justify-between items-center border-b pb-2">
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {metrics.map((metric) => (
+          <Card key={metric.title} className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+            <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="font-semibold">{cls.course}</p>
-                <p className="text-sm text-muted-foreground">{cls.student}</p>
+                <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
+                <h3 className="text-2xl font-bold mt-1">{metric.value}</h3>
               </div>
-              <div className="text-right">
-                <p>{cls.date}</p>
-                <p className="text-sm text-muted-foreground">{cls.time}</p>
+              <div className={`p-3 rounded-full bg-gray-50 dark:bg-gray-800/50 ${metric.color}`}>
+                <metric.icon className="w-6 h-6" />
               </div>
-            </div>
-          ))}
-        </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {/* Today's Classes */}
+      <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Video className="w-5 h-5 mr-2 text-brand-cyan" />
+            Today&apos;s Classes
+          </CardTitle>
+          <CardDescription>Your schedule for the rest of the day.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {todaysClasses.map((cls) => (
+              <div key={cls.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-lg gap-4">
+                <div>
+                  <p className="font-semibold">{cls.course}</p>
+                  <p className="text-sm text-muted-foreground">{cls.time} • Student: {cls.student}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" render={<Link href="/teacher/classes" />}>
+                    Manage
+                  </Button>
+                  <Button size="sm" className="bg-brand-cyan hover:bg-brand-cyan/90 text-white" render={<a href={cls.link} target="_blank" rel="noopener noreferrer" />}>
+                    Start Class <ExternalLink className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            
+            {todaysClasses.length === 0 && (
+              <div className="text-center py-6 text-muted-foreground">
+                No classes scheduled for today.
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
