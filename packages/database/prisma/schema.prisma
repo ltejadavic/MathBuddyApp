@@ -24,6 +24,11 @@ model User {
   deletedAt        DateTime?
   refreshTokenHash String?
 
+  firstName String?
+  lastName  String?
+  timezone  String?
+  country   String?
+
   studentProfile  StudentProfile?
   teacherProfile  TeacherProfile?
   guardianProfile GuardianProfile?
@@ -44,6 +49,8 @@ model StudentProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  guardians StudentGuardian[]
 
   @@map("student_profiles")
 }
@@ -72,5 +79,19 @@ model GuardianProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  students StudentGuardian[]
+
   @@map("guardian_profiles")
+}
+
+model StudentGuardian {
+  studentId        String
+  guardianId       String
+  student          StudentProfile  @relation(fields: [studentId], references: [id])
+  guardian         GuardianProfile @relation(fields: [guardianId], references: [id])
+  relationshipType String?
+  isPrimaryBilling Boolean         @default(false)
+
+  @@id([studentId, guardianId])
+  @@map("student_guardians")
 }
