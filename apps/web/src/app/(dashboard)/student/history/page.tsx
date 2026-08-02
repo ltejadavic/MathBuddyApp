@@ -45,7 +45,7 @@ export default function StudentHistoryPage() {
                   <p className="font-semibold text-sm">{cls.course}</p>
                   <p className="text-xs text-muted-foreground">{cls.date} - {cls.teacher}</p>
                 </div>
-                <Button variant="default" size="sm" className="bg-brand-cyan hover:bg-brand-cyan/90 text-white rounded-xl" render={<a href={cls.link} target="_blank" rel="noopener noreferrer" />}>
+                <Button variant="default" size="sm" className="bg-brand-cyan hover:bg-brand-cyan/90 text-white rounded-xl" render={<a href={cls.link} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
                   Join <ExternalLink className="w-3 h-3 ml-2" />
                 </Button>
               </div>

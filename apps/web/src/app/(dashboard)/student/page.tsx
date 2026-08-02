@@ -30,7 +30,7 @@ export default function StudentDashboardPage() {
             Here&apos;s an overview of your academic progress and upcoming schedule.
           </p>
         </div>
-        <Button render={<Link href="/student/schedule" />} className="w-full sm:w-auto bg-brand-cyan hover:bg-brand-cyan/90 text-white rounded-xl">
+        <Button render={<Link href="/student/schedule" />} nativeButton={false} className="w-full sm:w-auto bg-brand-cyan hover:bg-brand-cyan/90 text-white rounded-xl">
           Book a Class
         </Button>
       </div>
@@ -113,7 +113,7 @@ export default function StudentDashboardPage() {
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-4 rounded-xl" render={<Link href="/student/schedule" />}>
+            <Button variant="outline" className="w-full mt-4 rounded-xl" render={<Link href="/student/schedule" />} nativeButton={false}>
               View Full Schedule
             </Button>
           </CardContent>
@@ -138,7 +138,7 @@ export default function StudentDashboardPage() {
                   </p>
                 </div>
              </div>
-             <Button variant="outline" className="w-full mt-4 rounded-xl" render={<Link href="/student/history" />}>
+             <Button variant="outline" className="w-full mt-4 rounded-xl" render={<Link href="/student/history" />} nativeButton={false}>
               View Full History
             </Button>
           </CardContent>

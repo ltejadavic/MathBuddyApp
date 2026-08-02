@@ -68,10 +68,10 @@ export default function TeacherDashboardPage() {
                   <p className="text-sm text-muted-foreground">{cls.time} • Student: {cls.student}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" render={<Link href="/teacher/classes" />}>
+                  <Button variant="outline" size="sm" render={<Link href="/teacher/classes" />} nativeButton={false}>
                     Manage
                   </Button>
-                  <Button size="sm" className="bg-brand-cyan hover:bg-brand-cyan/90 text-white" render={<a href={cls.link} target="_blank" rel="noopener noreferrer" />}>
+                  <Button size="sm" className="bg-brand-cyan hover:bg-brand-cyan/90 text-white" render={<a href={cls.link} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
                     Start Class <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>
                 </div>

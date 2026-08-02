@@ -26,12 +26,16 @@ export function SidebarContent() {
   const adminLinks = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Users", href: "/admin/users", icon: Users },
-    { name: "Academic Programs", href: "/admin/programs", icon: BookOpen },
+    { name: "Academic Setup", href: "/admin/academic", icon: BookOpen },
+    { name: "Schedule", href: "/admin/schedule", icon: Calendar },
+    { name: "Financials", href: "/admin/financials", icon: Wallet },
   ];
 
   const teacherLinks = [
     { name: "Dashboard", href: "/teacher", icon: LayoutDashboard },
-    { name: "Schedule", href: "/teacher/schedule", icon: Calendar },
+    { name: "Schedule", href: "/teacher/schedule", icon: CalendarDays },
+    { name: "Classes", href: "/teacher/classes", icon: BookOpen },
+    { name: "Resources", href: "/teacher/resources", icon: FolderOpen },
     { name: "Earnings", href: "/teacher/earnings", icon: Wallet },
   ];
 
