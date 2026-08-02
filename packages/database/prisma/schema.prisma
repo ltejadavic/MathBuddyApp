@@ -33,6 +33,8 @@ model User {
   teacherProfile  TeacherProfile?
   guardianProfile GuardianProfile?
 
+  verifiedPayments Payment[] @relation("PaymentVerifier")
+
   @@map("users")
 }
 
@@ -50,9 +52,11 @@ model StudentProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  guardians   StudentGuardian[]
-  enrollments Enrollment[]
-  attendances ClassAttendance[]
+  guardians        StudentGuardian[]
+  enrollments      Enrollment[]
+  attendances      ClassAttendance[]
+  payments         Payment[]
+  hourTransactions HourTransaction[]
 
   @@map("student_profiles")
 }
@@ -86,6 +90,7 @@ model GuardianProfile {
   updatedAt DateTime @updatedAt
 
   students StudentGuardian[]
+  payments Payment[]
 
   @@map("guardian_profiles")
 }
@@ -227,6 +232,7 @@ model ClassSession {
   notes              String?
   
   attendances        ClassAttendance[]
+  hourTransactions   HourTransaction[]
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -248,4 +254,49 @@ model ClassAttendance {
 
   @@unique([classSessionId, studentId])
   @@map("class_attendances")
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id])
+  guardianId      String?
+  guardian        GuardianProfile? @relation(fields: [guardianId], references: [id])
+  
+  amountCents     Int
+  currency        String   @default("PEN")
+  referenceNumber String?
+  status          String   @default("PENDING")
+  
+  verifiedById    String?
+  verifiedBy      User?    @relation(name: "PaymentVerifier", fields: [verifiedById], references: [id])
+  
+  packageMinutes  Int
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  hourTransactions HourTransaction[]
+
+  @@map("payments")
+}
+
+model HourTransaction {
+  id              String   @id @default(uuid())
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id])
+  
+  amountMinutes   Int
+  type            String
+  description     String?
+  
+  paymentId       String?
+  payment         Payment? @relation(fields: [paymentId], references: [id])
+  
+  classSessionId  String?
+  classSession    ClassSession? @relation(fields: [classSessionId], references: [id])
+
+  createdAt       DateTime @default(now())
+
+  @@map("hour_transactions")
 }
