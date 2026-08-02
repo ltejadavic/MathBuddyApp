@@ -6,6 +6,8 @@ import {
   UpdateSessionDto,
   UpdateAttendanceDto,
 } from './dto/scheduling.dto';
+import { CompleteSessionDto } from './dto/complete-session.dto';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class SchedulingService {
@@ -117,6 +119,93 @@ export class SchedulingService {
     return this.prisma.classAttendance.update({
       where: { id: attendance.id },
       data: { status: data.status },
+    });
+  }
+
+  async completeSession(
+    sessionId: string,
+    data: CompleteSessionDto,
+  ): Promise<any> {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Validate session
+      const session = await tx.classSession.findUnique({
+        where: { id: sessionId },
+        include: { teacher: true, attendances: true },
+      });
+
+      if (!session) {
+        throw new NotFoundException(`Session ${sessionId} not found`);
+      }
+      if (session.status === 'COMPLETED') {
+        throw new BadRequestException(
+          `Session ${sessionId} is already completed`,
+        );
+      }
+
+      // 2. Update session status and times
+      const updatedSession = await tx.classSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'COMPLETED',
+          actualStartTime: new Date(data.actualStartTime),
+          actualEndTime: new Date(data.actualEndTime),
+        },
+      });
+
+      // 3. Process attendances and hours
+      for (const attDto of data.attendances) {
+        const attendance = session.attendances.find(
+          (a) => a.studentId === attDto.studentId,
+        );
+        if (!attendance) {
+          throw new BadRequestException(
+            `Student ${attDto.studentId} is not enrolled in this session`,
+          );
+        }
+
+        // Update attendance status
+        await tx.classAttendance.update({
+          where: { id: attendance.id },
+          data: { status: attDto.status },
+        });
+
+        // Deduct hours if applicable (PRESENT or ABSENT_NO_SHOW)
+        if (attDto.status === 'PRESENT' || attDto.status === 'ABSENT_NO_SHOW') {
+          await tx.hourTransaction.create({
+            data: {
+              studentId: attDto.studentId,
+              amountMinutes: -data.actualDurationMinutes,
+              type: 'CONSUMPTION',
+              description: `Class consumption for session ${sessionId} (${attDto.status})`,
+              classSessionId: sessionId,
+            },
+          });
+
+          await tx.studentProfile.update({
+            where: { id: attDto.studentId },
+            data: {
+              remainingMinutes: { decrement: data.actualDurationMinutes },
+            },
+          });
+        }
+      }
+
+      // 4. Generate Teacher Earnings
+      const earningCents = Math.round(
+        (session.teacher.hourlyRateCents / 60) * data.actualDurationMinutes,
+      );
+
+      await tx.teacherEarning.create({
+        data: {
+          teacherId: session.teacherId,
+          classSessionId: sessionId,
+          amountCents: earningCents,
+          currency: session.teacher.currency,
+          status: 'PENDING_PAYOUT',
+        },
+      });
+
+      return updatedSession;
     });
   }
 }

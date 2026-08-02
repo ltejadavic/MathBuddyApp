@@ -68,6 +68,9 @@ model TeacherProfile {
 
   // Optional: rates and subjects can be added later
   bio String?
+  
+  hourlyRateCents Int    @default(0)
+  currency        String @default("PEN")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -75,6 +78,7 @@ model TeacherProfile {
   courses        TeacherCourse[]
   availabilities TeacherAvailability[]
   sessions       ClassSession[]
+  earnings       TeacherEarning[]
 
   @@map("teacher_profiles")
 }
@@ -233,6 +237,7 @@ model ClassSession {
   
   attendances        ClassAttendance[]
   hourTransactions   HourTransaction[]
+  teacherEarning     TeacherEarning?
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -299,4 +304,22 @@ model HourTransaction {
   createdAt       DateTime @default(now())
 
   @@map("hour_transactions")
+}
+
+model TeacherEarning {
+  id              String   @id @default(uuid())
+  teacherId       String
+  teacher         TeacherProfile @relation(fields: [teacherId], references: [id])
+  
+  classSessionId  String   @unique
+  classSession    ClassSession   @relation(fields: [classSessionId], references: [id])
+  
+  amountCents     Int
+  currency        String   @default("PEN")
+  status          String   @default("PENDING_PAYOUT") // PENDING_PAYOUT, PAID
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("teacher_earnings")
 }

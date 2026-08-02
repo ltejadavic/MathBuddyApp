@@ -13,6 +13,7 @@ import {
   UpdateSessionDto,
   UpdateAttendanceDto,
 } from '../dto/scheduling.dto';
+import { CompleteSessionDto } from '../dto/complete-session.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -55,5 +56,14 @@ export class SessionsController {
     @Body() updateAttendanceDto: UpdateAttendanceDto,
   ): Promise<any> {
     return this.schedulingService.updateAttendance(id, updateAttendanceDto);
+  }
+
+  @Roles(Role.ADMIN, Role.TEACHER)
+  @Post(':id/complete')
+  async complete(
+    @Param('id') id: string,
+    @Body() completeSessionDto: CompleteSessionDto,
+  ): Promise<any> {
+    return this.schedulingService.completeSession(id, completeSessionDto);
   }
 }
