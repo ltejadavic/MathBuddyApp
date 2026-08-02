@@ -38,7 +38,20 @@ export default function LoginPage() {
       const { user, accessToken } = response.data;
       
       setAuth(user, accessToken);
-      router.push("/dashboard"); // We'll create this later
+      
+      switch (user.role) {
+        case 'ADMIN':
+          router.push('/admin');
+          break;
+        case 'TEACHER':
+          router.push('/teacher');
+          break;
+        case 'STUDENT':
+          router.push('/student');
+          break;
+        default:
+          router.push('/');
+      }
     } catch (err) {
       setError(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
