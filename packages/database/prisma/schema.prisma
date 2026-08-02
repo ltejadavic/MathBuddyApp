@@ -60,6 +60,12 @@ model StudentProfile {
   attendances      ClassAttendance[]
   payments         Payment[]
   hourTransactions HourTransaction[]
+  
+  assignments      Assignment[]
+  submissions      AssignmentSubmission[]
+  assessmentResults AssessmentResult[]
+  progressRecords  ProgressRecord[]
+  classSummaries   ClassSummary[]
 
   @@map("student_profiles")
 }
@@ -82,6 +88,12 @@ model TeacherProfile {
   availabilities TeacherAvailability[]
   sessions       ClassSession[]
   earnings       TeacherEarning[]
+  
+  assignmentsCreated   Assignment[]
+  submissionsGraded    AssignmentSubmission[] @relation("SubmissionGrader")
+  assessmentsRecorded  AssessmentResult[]     @relation("AssessmentRecorder")
+  progressUpdates      ProgressRecord[]
+  classSummaries       ClassSummary[]
 
   @@map("teacher_profiles")
 }
@@ -120,6 +132,8 @@ model Program {
   description String?
   isActive    Boolean  @default(true)
   courses     Course[]
+  assessments Assessment[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -138,6 +152,9 @@ model Course {
   teacherAssignments TeacherCourse[]
   enrollments        Enrollment[]
   sessions           ClassSession[]
+  
+  assignments        Assignment[]
+  assessments        Assessment[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -165,6 +182,9 @@ model Topic {
   name        String
   description String?
   skills      Skill[]
+  
+  progressRecords ProgressRecord[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -177,6 +197,9 @@ model Skill {
   topic       Topic    @relation(fields: [topicId], references: [id])
   name        String
   description String?
+  
+  progressRecords ProgressRecord[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -241,6 +264,7 @@ model ClassSession {
   attendances        ClassAttendance[]
   hourTransactions   HourTransaction[]
   teacherEarning     TeacherEarning?
+  classSummaries     ClassSummary[]
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -370,4 +394,150 @@ model ChatMessage {
   createdAt     DateTime @default(now())
 
   @@map("chat_messages")
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  
+  teacherId   String
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  
+  courseId    String?
+  course      Course?        @relation(fields: [courseId], references: [id])
+  
+  studentId   String?
+  student     StudentProfile? @relation(fields: [studentId], references: [id])
+  
+  submissions AssignmentSubmission[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id             String   @id @default(uuid())
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id])
+  
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id])
+  
+  content        String?
+  attachmentUrl  String?
+  
+  submittedAt    DateTime?
+  status         String   @default("PENDING") // PENDING, SUBMITTED, GRADED
+  
+  rawScore       Float?
+  scaledScore    Float?
+  
+  publicFeedback String?
+  privateNotes   String?
+  
+  gradedById     String?
+  gradedBy       TeacherProfile? @relation(name: "SubmissionGrader", fields: [gradedById], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([assignmentId, studentId])
+  @@map("assignment_submissions")
+}
+
+model Assessment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  
+  programId   String?
+  program     Program? @relation(fields: [programId], references: [id])
+
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id])
+  
+  totalRawScore Float?
+  
+  results     AssessmentResult[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("assessments")
+}
+
+model AssessmentResult {
+  id             String   @id @default(uuid())
+  assessmentId   String
+  assessment     Assessment @relation(fields: [assessmentId], references: [id])
+  
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id])
+  
+  dateTaken      DateTime
+  
+  rawScore       Float
+  scaledScore    Float?
+  
+  publicFeedback String?
+  privateNotes   String?
+  
+  recordedById   String
+  recordedBy     TeacherProfile @relation(name: "AssessmentRecorder", fields: [recordedById], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("assessment_results")
+}
+
+model ProgressRecord {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+  
+  topicId     String?
+  topic       Topic?   @relation(fields: [topicId], references: [id])
+  
+  skillId     String?
+  skill       Skill?   @relation(fields: [skillId], references: [id])
+  
+  status      String   @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, MASTERED
+  confidence  Int?     // 1 to 5 scale
+  
+  notes       String?
+  
+  updatedById String
+  updatedBy   TeacherProfile @relation(fields: [updatedById], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([studentId, topicId, skillId])
+  @@map("progress_records")
+}
+
+model ClassSummary {
+  id             String   @id @default(uuid())
+  classSessionId String
+  classSession   ClassSession @relation(fields: [classSessionId], references: [id])
+  
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id])
+  
+  teacherId      String
+  teacher        TeacherProfile @relation(fields: [teacherId], references: [id])
+  
+  publicSummary  String? // Visible to guardian/student
+  privateNotes   String? // Visible only to teachers/admins
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([classSessionId, studentId])
+  @@map("class_summaries")
 }
