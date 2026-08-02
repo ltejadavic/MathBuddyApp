@@ -50,7 +50,8 @@ model StudentProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  guardians StudentGuardian[]
+  guardians   StudentGuardian[]
+  enrollments Enrollment[]
 
   @@map("student_profiles")
 }
@@ -65,6 +66,8 @@ model TeacherProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  courses TeacherCourse[]
 
   @@map("teacher_profiles")
 }
@@ -94,4 +97,97 @@ model StudentGuardian {
 
   @@id([studentId, guardianId])
   @@map("student_guardians")
+}
+
+model Program {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  courses     Course[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("programs")
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  programId   String
+  program     Program  @relation(fields: [programId], references: [id])
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  subjects    Subject[]
+  
+  teacherAssignments TeacherCourse[]
+  enrollments        Enrollment[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("courses")
+}
+
+model Subject {
+  id          String   @id @default(uuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  name        String
+  description String?
+  topics      Topic[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("subjects")
+}
+
+model Topic {
+  id          String   @id @default(uuid())
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  name        String
+  description String?
+  skills      Skill[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("topics")
+}
+
+model Skill {
+  id          String   @id @default(uuid())
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id])
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("skills")
+}
+
+model TeacherCourse {
+  teacherId String
+  courseId  String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id])
+  course    Course         @relation(fields: [courseId], references: [id])
+  createdAt DateTime       @default(now())
+
+  @@id([teacherId, courseId])
+  @@map("teacher_courses")
+}
+
+model Enrollment {
+  id        String         @id @default(uuid())
+  studentId String
+  courseId  String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  course    Course         @relation(fields: [courseId], references: [id])
+  status    String         @default("ACTIVE")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([studentId, courseId])
+  @@map("enrollments")
 }
