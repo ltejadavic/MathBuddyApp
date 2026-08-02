@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
 import { FinanceModule } from './finance/finance.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { FinanceModule } from './finance/finance.module';
     CatalogModule,
     SchedulingModule,
     FinanceModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
