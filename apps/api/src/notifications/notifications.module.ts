@@ -13,7 +13,7 @@ import * as path from 'path';
           port: parseInt(process.env.SMTP_PORT || '587', 10),
           secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
           auth: {
-            user: process.env.SMTP_USER || 'test@ethereal.email', 
+            user: process.env.SMTP_USER || 'test@ethereal.email',
             pass: process.env.SMTP_PASS || 'pass',
           },
         },

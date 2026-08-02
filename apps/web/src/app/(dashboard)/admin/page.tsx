@@ -1,30 +1,37 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StatCard } from '../../../components/dashboard/StatCard';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function AdminDashboardPage() {
-  const [metrics, setMetrics] = useState<any>(null);
+interface MonthlyRevenue {
+  name: string;
+  revenue: number;
+}
 
-  useEffect(() => {
-    // In a real implementation, this would fetch from /api/reports/admin
-    // For now, we mock the data.
-    setMetrics({
-      totalRevenueCents: 1500000,
-      activeStudents: 120,
-      activeTeachers: 15,
-      totalHoursPurchased: 500,
-      monthlyRevenue: [
-        { name: 'Jan', revenue: 4000 },
-        { name: 'Feb', revenue: 3000 },
-        { name: 'Mar', revenue: 2000 },
-        { name: 'Apr', revenue: 2780 },
-        { name: 'May', revenue: 1890 },
-        { name: 'Jun', revenue: 2390 },
-      ]
-    });
-  }, []);
+interface AdminMetrics {
+  totalRevenueCents: number;
+  activeStudents: number;
+  activeTeachers: number;
+  totalHoursPurchased: number;
+  monthlyRevenue: MonthlyRevenue[];
+}
+
+export default function AdminDashboardPage() {
+  const [metrics] = useState<AdminMetrics>({
+    totalRevenueCents: 1500000,
+    activeStudents: 120,
+    activeTeachers: 15,
+    totalHoursPurchased: 500,
+    monthlyRevenue: [
+      { name: 'Jan', revenue: 4000 },
+      { name: 'Feb', revenue: 3000 },
+      { name: 'Mar', revenue: 2000 },
+      { name: 'Apr', revenue: 2780 },
+      { name: 'May', revenue: 1890 },
+      { name: 'Jun', revenue: 2390 },
+    ]
+  });
 
   if (!metrics) return <div>Loading...</div>;
 

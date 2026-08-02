@@ -42,7 +42,10 @@ export class NotificationsService {
       });
       this.logger.log(`Class scheduled email sent to ${recipientEmail}`);
     } catch (error) {
-      this.logger.error(`Failed to send class scheduled email to ${recipientEmail}`, error);
+      this.logger.error(
+        `Failed to send class scheduled email to ${recipientEmail}`,
+        error,
+      );
     }
   }
 
@@ -64,7 +67,10 @@ export class NotificationsService {
       });
       this.logger.log(`Payment verified email sent to ${guardianEmail}`);
     } catch (error) {
-      this.logger.error(`Failed to send payment verified email to ${guardianEmail}`, error);
+      this.logger.error(
+        `Failed to send payment verified email to ${guardianEmail}`,
+        error,
+      );
     }
   }
 }

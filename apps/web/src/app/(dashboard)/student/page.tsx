@@ -1,23 +1,39 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StatCard } from '../../../components/dashboard/StatCard';
 
-export default function StudentDashboardPage() {
-  const [metrics, setMetrics] = useState<any>(null);
+interface UpcomingClass {
+  id: string;
+  date: string;
+  time: string;
+  teacher: string;
+  course: string;
+}
 
-  useEffect(() => {
-    // Mocked data for MVP
-    setMetrics({
-      remainingHours: 12.5,
-      upcomingClasses: [
-        { id: '1', date: '2026-08-05', time: '10:00 AM', teacher: 'Mr. Smith', course: 'SAT Math' },
-      ],
-      recentSummaries: [
-        { id: '1', date: '2026-08-01', course: 'SAT Math', notes: 'Great progress on algebra.' },
-      ],
-    });
-  }, []);
+interface RecentSummary {
+  id: string;
+  date: string;
+  course: string;
+  notes: string;
+}
+
+interface StudentMetrics {
+  remainingHours: number;
+  upcomingClasses: UpcomingClass[];
+  recentSummaries: RecentSummary[];
+}
+
+export default function StudentDashboardPage() {
+  const [metrics] = useState<StudentMetrics>({
+    remainingHours: 12.5,
+    upcomingClasses: [
+      { id: '1', date: '2026-08-05', time: '10:00 AM', teacher: 'Mr. Smith', course: 'SAT Math' },
+    ],
+    recentSummaries: [
+      { id: '1', date: '2026-08-01', course: 'SAT Math', notes: 'Great progress on algebra.' },
+    ],
+  });
 
   if (!metrics) return <div>Loading...</div>;
 
@@ -45,7 +61,7 @@ export default function StudentDashboardPage() {
         <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
           <h3 className="text-lg font-medium mb-4">Upcoming Classes</h3>
           <div className="space-y-4">
-            {metrics.upcomingClasses.map((cls: any) => (
+            {metrics.upcomingClasses.map((cls: UpcomingClass) => (
               <div key={cls.id} className="flex justify-between items-center border-b pb-2">
                 <div>
                   <p className="font-semibold">{cls.course}</p>
@@ -66,7 +82,7 @@ export default function StudentDashboardPage() {
         <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
           <h3 className="text-lg font-medium mb-4">Recent Feedback</h3>
           <div className="space-y-4">
-            {metrics.recentSummaries.map((summary: any) => (
+            {metrics.recentSummaries.map((summary: RecentSummary) => (
               <div key={summary.id} className="border-b pb-2">
                 <div className="flex justify-between">
                   <p className="font-semibold">{summary.course}</p>

@@ -1,22 +1,31 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StatCard } from '../../../components/dashboard/StatCard';
 
-export default function TeacherDashboardPage() {
-  const [metrics, setMetrics] = useState<any>(null);
+interface ClassSession {
+  id: string;
+  date: string;
+  time: string;
+  student: string;
+  course: string;
+}
 
-  useEffect(() => {
-    // Mocked data for MVP
-    setMetrics({
-      pendingEarningsCents: 15000,
-      totalEarningsCents: 450000,
-      upcomingClasses: [
-        { id: '1', date: '2026-08-05', time: '10:00 AM', student: 'John Doe', course: 'SAT Math' },
-        { id: '2', date: '2026-08-06', time: '02:00 PM', student: 'Jane Smith', course: 'IB Physics' },
-      ],
-    });
-  }, []);
+interface TeacherMetrics {
+  pendingEarningsCents: number;
+  totalEarningsCents: number;
+  upcomingClasses: ClassSession[];
+}
+
+export default function TeacherDashboardPage() {
+  const [metrics] = useState<TeacherMetrics>({
+    pendingEarningsCents: 15000,
+    totalEarningsCents: 450000,
+    upcomingClasses: [
+      { id: '1', date: '2026-08-05', time: '10:00 AM', student: 'John Doe', course: 'SAT Math' },
+      { id: '2', date: '2026-08-06', time: '02:00 PM', student: 'Jane Smith', course: 'IB Physics' },
+    ],
+  });
 
   if (!metrics) return <div>Loading...</div>;
 
@@ -45,7 +54,7 @@ export default function TeacherDashboardPage() {
       <div className="mt-8 rounded-xl border bg-card text-card-foreground shadow p-6">
         <h3 className="text-lg font-medium mb-4">Upcoming Classes</h3>
         <div className="space-y-4">
-          {metrics.upcomingClasses.map((cls: any) => (
+          {metrics.upcomingClasses.map((cls: ClassSession) => (
             <div key={cls.id} className="flex justify-between items-center border-b pb-2">
               <div>
                 <p className="font-semibold">{cls.course}</p>
