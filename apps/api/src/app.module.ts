@@ -10,7 +10,8 @@ import { FinanceModule } from './finance/finance.module';
 import { ChatModule } from './chat/chat.module';
 import { AcademicModule } from './academic/academic.module';
 import { StorageModule } from './storage/storage.module';
-
+import { NotificationsModule } from './notifications/notifications.module';
+import { ReportsModule } from './reports/reports.module';
 @Module({
   imports: [
     PrismaModule,
@@ -22,6 +23,8 @@ import { StorageModule } from './storage/storage.module';
     ChatModule,
     AcademicModule,
     StorageModule,
+    NotificationsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
