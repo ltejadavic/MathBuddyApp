@@ -52,6 +52,7 @@ model StudentProfile {
 
   guardians   StudentGuardian[]
   enrollments Enrollment[]
+  attendances ClassAttendance[]
 
   @@map("student_profiles")
 }
@@ -67,7 +68,9 @@ model TeacherProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  courses TeacherCourse[]
+  courses        TeacherCourse[]
+  availabilities TeacherAvailability[]
+  sessions       ClassSession[]
 
   @@map("teacher_profiles")
 }
@@ -122,6 +125,7 @@ model Course {
   
   teacherAssignments TeacherCourse[]
   enrollments        Enrollment[]
+  sessions           ClassSession[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -190,4 +194,58 @@ model Enrollment {
 
   @@unique([studentId, courseId])
   @@map("enrollments")
+}
+
+model TeacherAvailability {
+  id        String         @id @default(uuid())
+  teacherId String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id])
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  timeZone  String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("teacher_availabilities")
+}
+
+model ClassSession {
+  id                 String   @id @default(uuid())
+  courseId           String
+  course             Course   @relation(fields: [courseId], references: [id])
+  teacherId          String
+  teacher            TeacherProfile @relation(fields: [teacherId], references: [id])
+  
+  scheduledStartTime DateTime
+  scheduledEndTime   DateTime
+  actualStartTime    DateTime?
+  actualEndTime      DateTime?
+  
+  status             String   @default("SCHEDULED")
+  meetingLink        String?
+  notes              String?
+  
+  attendances        ClassAttendance[]
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("class_sessions")
+}
+
+model ClassAttendance {
+  id             String         @id @default(uuid())
+  classSessionId String
+  classSession   ClassSession   @relation(fields: [classSessionId], references: [id])
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id])
+  
+  status         String         @default("EXPECTED")
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([classSessionId, studentId])
+  @@map("class_attendances")
 }

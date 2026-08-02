@@ -39,9 +39,10 @@ export default function LoginPage() {
       
       setAuth(user, accessToken);
       router.push("/dashboard"); // We'll create this later
-    } catch (err: any) {
+    } catch (err) {
       setError(
-        err.response?.data?.message || "An error occurred during login."
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (err as any).response?.data?.message || "An error occurred during login."
       );
     }
   };
