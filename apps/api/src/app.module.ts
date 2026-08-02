@@ -9,6 +9,7 @@ import { SchedulingModule } from './scheduling/scheduling.module';
 import { FinanceModule } from './finance/finance.module';
 import { ChatModule } from './chat/chat.module';
 import { AcademicModule } from './academic/academic.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AcademicModule } from './academic/academic.module';
     FinanceModule,
     ChatModule,
     AcademicModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],
