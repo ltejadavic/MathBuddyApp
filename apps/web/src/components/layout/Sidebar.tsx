@@ -7,14 +7,17 @@ import {
   LayoutDashboard, 
   Users, 
   BookOpen, 
-  Calendar, 
-  CreditCard,
+  Calendar,
   Calculator,
-  Wallet
+  Wallet,
+  CalendarDays,
+  History,
+  FolderOpen,
+  UserCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function Sidebar() {
+export function SidebarContent() {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
 
@@ -34,18 +37,21 @@ export function Sidebar() {
 
   const studentLinks = [
     { name: "Dashboard", href: "/student", icon: LayoutDashboard },
-    { name: "My Classes", href: "/student/classes", icon: Calendar },
-    { name: "Billing & Packages", href: "/student/billing", icon: CreditCard },
+    { name: "Book Classes", href: "/student/schedule", icon: CalendarDays },
+    { name: "Class History", href: "/student/history", icon: History },
+    { name: "Resources", href: "/student/resources", icon: FolderOpen },
+    { name: "Profile", href: "/student/profile", icon: UserCircle },
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let links: any[] = [];
   if (user.role === "ADMIN") links = adminLinks;
   else if (user.role === "TEACHER") links = teacherLinks;
   else if (user.role === "STUDENT") links = studentLinks;
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
-      <div className="flex h-16 items-center px-6 border-b border-gray-200 dark:border-gray-800">
+    <>
+      <div className="flex h-16 items-center px-6 border-b border-gray-200 dark:border-gray-800 shrink-0">
         <Calculator className="h-6 w-6 text-brand-cyan" />
         <span className="ml-3 text-lg font-bold text-gray-900 dark:text-white">
           MathBuddy
@@ -77,6 +83,14 @@ export function Sidebar() {
           );
         })}
       </div>
+    </>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <div className="hidden md:flex h-full w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+      <SidebarContent />
     </div>
   );
 }

@@ -1,101 +1,148 @@
 "use client";
 
-import React, { useState } from 'react';
-import { StatCard } from '../../../components/dashboard/StatCard';
-
-interface UpcomingClass {
-  id: string;
-  date: string;
-  time: string;
-  teacher: string;
-  course: string;
-}
-
-interface RecentSummary {
-  id: string;
-  date: string;
-  course: string;
-  notes: string;
-}
-
-interface StudentMetrics {
-  remainingHours: number;
-  upcomingClasses: UpcomingClass[];
-  recentSummaries: RecentSummary[];
-}
+import { useAuthStore } from "@/store/auth-store";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Clock, Calendar as CalendarIcon, BookOpen, GraduationCap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function StudentDashboardPage() {
-  const [metrics] = useState<StudentMetrics>({
+  const user = useAuthStore((state) => state.user);
+
+  // Mock data for now until backend is connected
+  const studentData = {
+    firstName: user?.email?.split("@")[0] || "Student",
     remainingHours: 12.5,
     upcomingClasses: [
-      { id: '1', date: '2026-08-05', time: '10:00 AM', teacher: 'Mr. Smith', course: 'SAT Math' },
-    ],
-    recentSummaries: [
-      { id: '1', date: '2026-08-01', course: 'SAT Math', notes: 'Great progress on algebra.' },
-    ],
-  });
-
-  if (!metrics) return <div>Loading...</div>;
+      { id: 1, title: "SAT Math Prep", teacher: "Mr. Smith", date: "Today, 4:00 PM", duration: "1.5 hrs" },
+      { id: 2, title: "IB Physics", teacher: "Ms. Johnson", date: "Tomorrow, 5:30 PM", duration: "1 hr" }
+    ]
+  };
 
   return (
-    <div className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Student Dashboard</h1>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard 
-          title="Remaining Hours" 
-          value={metrics.remainingHours} 
-          description="Total hours available"
-        />
-        <StatCard 
-          title="Upcoming Classes" 
-          value={metrics.upcomingClasses.length} 
-        />
-        <StatCard 
-          title="Recent Summaries" 
-          value={metrics.recentSummaries.length} 
-        />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white capitalize">
+            Welcome back, {studentData.firstName}!
+          </h2>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+            Here&apos;s an overview of your academic progress and upcoming schedule.
+          </p>
+        </div>
+        <Button render={<Link href="/student/schedule" />} className="w-full sm:w-auto bg-brand-cyan hover:bg-brand-cyan/90 text-white rounded-xl">
+          Book a Class
+        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mt-8">
-        <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
-          <h3 className="text-lg font-medium mb-4">Upcoming Classes</h3>
-          <div className="space-y-4">
-            {metrics.upcomingClasses.map((cls: UpcomingClass) => (
-              <div key={cls.id} className="flex justify-between items-center border-b pb-2">
-                <div>
-                  <p className="font-semibold">{cls.course}</p>
-                  <p className="text-sm text-muted-foreground">{cls.teacher}</p>
-                </div>
-                <div className="text-right">
-                  <p>{cls.date}</p>
-                  <p className="text-sm text-muted-foreground">{cls.time}</p>
-                </div>
-              </div>
-            ))}
-            {metrics.upcomingClasses.length === 0 && (
-              <p className="text-sm text-muted-foreground">No upcoming classes.</p>
-            )}
-          </div>
-        </div>
+      {/* Overview Cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Remaining Hours</CardTitle>
+            <Clock className="h-4 w-4 text-brand-cyan" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{studentData.remainingHours} hrs</div>
+            <p className="text-xs text-muted-foreground">
+              From your active packages
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Classes This Week</CardTitle>
+            <CalendarIcon className="h-4 w-4 text-brand-cyan" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">3</div>
+            <p className="text-xs text-muted-foreground">
+              1 completed, 2 upcoming
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
-          <h3 className="text-lg font-medium mb-4">Recent Feedback</h3>
-          <div className="space-y-4">
-            {metrics.recentSummaries.map((summary: RecentSummary) => (
-              <div key={summary.id} className="border-b pb-2">
-                <div className="flex justify-between">
-                  <p className="font-semibold">{summary.course}</p>
-                  <p className="text-sm text-muted-foreground">{summary.date}</p>
+        <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
+            <BookOpen className="h-4 w-4 text-brand-cyan" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">2</div>
+            <p className="text-xs text-muted-foreground">
+              SAT Math, IB Physics
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Score</CardTitle>
+            <GraduationCap className="h-4 w-4 text-brand-cyan" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">92%</div>
+            <p className="text-xs text-muted-foreground">
+              Based on recent evaluations
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800 flex-1">
+          <CardHeader>
+            <CardTitle>Upcoming Classes</CardTitle>
+            <CardDescription>
+              Your schedule for the next few days.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {studentData.upcomingClasses.map(cls => (
+                <div key={cls.id} className="flex items-start justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-gray-50/50 dark:bg-gray-900/50">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">{cls.title}</p>
+                    <p className="text-sm text-muted-foreground">with {cls.teacher}</p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="text-sm font-medium text-brand-cyan">{cls.date}</p>
+                    <p className="text-xs text-muted-foreground">{cls.duration}</p>
+                  </div>
                 </div>
-                <p className="text-sm mt-1">{summary.notes}</p>
-              </div>
-            ))}
-            {metrics.recentSummaries.length === 0 && (
-              <p className="text-sm text-muted-foreground">No recent summaries.</p>
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+            <Button variant="outline" className="w-full mt-4 rounded-xl" render={<Link href="/student/schedule" />}>
+              View Full Schedule
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800 flex-1">
+          <CardHeader>
+            <CardTitle>Recent Feedback</CardTitle>
+            <CardDescription>
+              Notes from your teachers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+             <div className="space-y-4">
+                <div className="p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-gray-50/50 dark:bg-gray-900/50">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">SAT Math</span>
+                    <span className="text-xs text-muted-foreground">Yesterday</span>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    &quot;Great job on the algebra section today. Please review the quadratic equations worksheet for next class.&quot;
+                  </p>
+                </div>
+             </div>
+             <Button variant="outline" className="w-full mt-4 rounded-xl" render={<Link href="/student/history" />}>
+              View Full History
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
