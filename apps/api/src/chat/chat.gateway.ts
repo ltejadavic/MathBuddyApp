@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
 import { SendMessageDto } from './dto/chat.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @WebSocketGateway({
   cors: {
@@ -22,7 +23,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   // Using a map to track user online presence
   private userSockets = new Map<string, string[]>();
@@ -107,6 +111,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Broadcast to everyone in the thread and their personal rooms (including sender)
     this.server.to(rooms).emit('new_message', message);
 
+    // Create DB Notification for recipients (excluding sender)
+    if (participants) {
+      const senderName = message.sender.firstName ? `${message.sender.firstName} ${message.sender.lastName || ''}`.trim() : 'alguien';
+      
+      for (const p of participants) {
+        if (p.userId !== userId) {
+          const notification = await this.prisma.notification.create({
+            data: {
+              userId: p.userId,
+              title: 'Nuevo Mensaje',
+              message: `Has recibido un nuevo mensaje de ${senderName}.`,
+              type: 'SYSTEM',
+              link: `/messages`
+            }
+          });
+          // Emit to recipient's personal room
+          this.server.to(`user_${p.userId}`).emit('new_notification', notification);
+        }
+      }
+    }
+
     return { status: 'sent', message };
   }
 
@@ -134,5 +159,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const userId = client.data.user.id;
     await this.chatService.markThreadAsRead(threadId, userId);
+  }
+
+  // --- Helper to broadcast notifications from outside ---
+  emitNotification(userId: string, notification: any) {
+    this.server.to(`user_${userId}`).emit('new_notification', notification);
   }
 }

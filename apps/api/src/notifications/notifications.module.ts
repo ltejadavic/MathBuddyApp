@@ -2,10 +2,15 @@ import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { EjsAdapter } from '@nestjs-modules/mailer/adapters/ejs.adapter';
 import { NotificationsService } from './notifications.service';
+import { NotificationsController } from './notifications.controller';
+import { PrismaModule } from '../prisma/prisma.module';
+import { ChatModule } from '../chat/chat.module';
 import * as path from 'path';
 
 @Module({
   imports: [
+    PrismaModule,
+    ChatModule,
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
@@ -30,6 +35,7 @@ import * as path from 'path';
       }),
     }),
   ],
+  controllers: [NotificationsController],
   providers: [NotificationsService],
   exports: [NotificationsService],
 })

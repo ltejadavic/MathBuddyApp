@@ -7,6 +7,7 @@ import { LogOut, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SidebarContent } from "./Sidebar";
+import { NotificationBell } from "./NotificationBell";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
@@ -56,6 +57,7 @@ export function Navbar() {
       </div>
       
       <div className="flex items-center space-x-2 md:space-x-4">
+        <NotificationBell />
         <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
           <User className="h-4 w-4 md:mr-2" />
           <span className="hidden sm:inline-block truncate max-w-[120px] md:max-w-[200px]">{user.email}</span>

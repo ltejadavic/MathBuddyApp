@@ -38,6 +38,9 @@ model User {
   chatParticipants ChatParticipant[]
   chatMessages     ChatMessage[]
   
+  resolvedRequests ClassRequest[] @relation("RequestResolver")
+  notifications    Notification[]
+  
   uploadedResources Resource[]
 
   @@map("users")
@@ -62,6 +65,9 @@ model StudentProfile {
   attendances      ClassAttendance[]
   payments         Payment[]
   hourTransactions HourTransaction[]
+  
+  availabilities   StudentAvailability[]
+  classRequests    ClassRequest[]
   
   assignments      Assignment[]
   submissions      AssignmentSubmission[]
@@ -158,6 +164,7 @@ model Course {
   assignments        Assignment[]
   assessments        Assessment[]
   resources          Resource[]
+  classRequests      ClassRequest[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -238,7 +245,7 @@ model TeacherAvailability {
   id        String         @id @default(uuid())
   teacherId String
   teacher   TeacherProfile @relation(fields: [teacherId], references: [id])
-  dayOfWeek Int
+  date      DateTime       // The specific calendar date this availability applies to
   startTime String
   endTime   String
   timeZone  String
@@ -352,6 +359,55 @@ model TeacherEarning {
   updatedAt       DateTime @updatedAt
 
   @@map("teacher_earnings")
+}
+
+model StudentAvailability {
+  id        String         @id @default(uuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  date      DateTime       // The specific calendar date this availability applies to
+  startTime String
+  endTime   String
+  timeZone  String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("student_availabilities")
+}
+
+model ClassRequest {
+  id          String         @id @default(uuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+  courseId    String
+  course      Course         @relation(fields: [courseId], references: [id])
+  status      String         @default("PENDING") // PENDING, RESOLVED, CANCELLED
+  notes       String?
+  
+  resolvedById String?
+  resolvedBy   User?         @relation(name: "RequestResolver", fields: [resolvedById], references: [id])
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("class_requests")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  title     String
+  message   String
+  type      String   // e.g., "CLASS_REQUEST", "CLASS_SCHEDULED"
+  link      String?  
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notifications")
 }
 
 model ChatThread {

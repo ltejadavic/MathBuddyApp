@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   UseGuards,
@@ -26,6 +27,11 @@ import {
   RecordAssessmentResultDto,
   UpdateProgressDto,
   CreateClassSummaryDto,
+  CreateProgramDto,
+  UpdateProgramDto,
+  CreateCourseDto,
+  UpdateCourseDto,
+  AssignTeacherDto,
 } from './dto/academic.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -138,5 +144,75 @@ export class AcademicController {
   async getMyProgress(@Request() req: any) {
     // A student fetches their own progress
     return this.academicService.getStudentProgress(req.user.id);
+  }
+
+  // --- Programs & Courses (Admin) ---
+
+  @Roles('ADMIN')
+  @Post('programs')
+  async createProgram(@Body() dto: CreateProgramDto) {
+    return this.academicService.createProgram(dto);
+  }
+
+  @Roles('ADMIN', 'TEACHER', 'STUDENT', 'GUARDIAN')
+  @Get('programs')
+  async findAllPrograms() {
+    return this.academicService.findAllPrograms();
+  }
+
+  @Roles('ADMIN')
+  @Patch('programs/:id')
+  async updateProgram(@Param('id') id: string, @Body() dto: UpdateProgramDto) {
+    return this.academicService.updateProgram(id, dto);
+  }
+
+  @Roles('ADMIN')
+  @Delete('programs/:id')
+  async deleteProgram(@Param('id') id: string) {
+    return this.academicService.deleteProgram(id);
+  }
+
+  @Roles('ADMIN')
+  @Post('courses')
+  async createCourse(@Body() dto: CreateCourseDto & { programId: string }) {
+    return this.academicService.createCourse(dto);
+  }
+
+  @Roles('ADMIN', 'TEACHER', 'STUDENT', 'GUARDIAN')
+  @Get('courses')
+  async findAllCourses() {
+    return this.academicService.findAllCourses();
+  }
+
+  @Roles('ADMIN')
+  @Patch('courses/:id')
+  async updateCourse(@Param('id') id: string, @Body() dto: UpdateCourseDto) {
+    return this.academicService.updateCourse(id, dto);
+  }
+
+  @Roles('ADMIN')
+  @Delete('courses/:id')
+  async deleteCourse(@Param('id') id: string) {
+    return this.academicService.deleteCourse(id);
+  }
+
+  // --- Teacher Assignments (Admin) ---
+
+  @Roles('ADMIN')
+  @Post('courses/:courseId/teachers')
+  async assignTeacher(
+    @Param('courseId') courseId: string,
+    @Body() dto: AssignTeacherDto,
+  ) {
+    return this.academicService.assignTeacher(courseId, dto);
+  }
+
+  @Roles('ADMIN')
+  @Delete('courses/:courseId/teachers/:teacherId')
+  async removeTeacherAssignment(
+    @Param('courseId') courseId: string,
+    @Param('teacherId') teacherId: string,
+  ) {
+    return this.academicService.removeTeacherAssignment(courseId, teacherId);
   }
 }

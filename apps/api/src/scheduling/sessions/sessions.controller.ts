@@ -1,6 +1,6 @@
 import {
   Controller,
-  Get,
+  Get, Put, Delete,
   Post,
   Body,
   Patch,
@@ -12,7 +12,8 @@ import { SchedulingService } from '../scheduling.service';
 import {
   CreateSessionDto,
   UpdateSessionDto,
-  UpdateAttendanceDto,
+  UpdateAttendanceDto, EditScheduleDto,
+  ScheduleMatchedClassesDto,
 } from '../dto/scheduling.dto';
 import { CompleteSessionDto } from '../dto/complete-session.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -29,6 +30,12 @@ export class SessionsController {
   @Post()
   async create(@Body() createSessionDto: CreateSessionDto): Promise<any> {
     return this.schedulingService.createSession(createSessionDto);
+  }
+
+  @Roles(Role.ADMIN)
+  @Post('matchmaking/schedule')
+  async scheduleMatched(@Body() dto: ScheduleMatchedClassesDto): Promise<any> {
+    return this.schedulingService.scheduleMatchedClasses(dto);
   }
 
   @Get()
@@ -66,5 +73,23 @@ export class SessionsController {
     @Body() completeSessionDto: CompleteSessionDto,
   ): Promise<any> {
     return this.schedulingService.completeSession(id, completeSessionDto);
+  }
+
+  @Roles(Role.ADMIN)
+  @Get('schedules/list')
+  getSchedules(@Query('studentId') studentId: string, @Query('teacherId') teacherId: string) {
+    return this.schedulingService.getSchedules(studentId, teacherId);
+  }
+
+  @Roles(Role.ADMIN)
+  @Put('schedules/:courseId')
+  updateSchedule(@Param('courseId') courseId: string, @Body() data: EditScheduleDto) {
+    return this.schedulingService.updateSchedule(courseId, data);
+  }
+
+  @Roles(Role.ADMIN)
+  @Delete('schedules/:courseId')
+  deleteSchedule(@Param('courseId') courseId: string, @Query('studentId') studentId: string, @Query('teacherId') teacherId: string) {
+    return this.schedulingService.deleteSchedule(courseId, studentId, teacherId);
   }
 }

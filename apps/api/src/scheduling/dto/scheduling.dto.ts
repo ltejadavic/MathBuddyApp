@@ -6,29 +6,53 @@ import {
   IsString,
   Max,
   Min,
+  ValidateNested,
+  IsArray
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class CreateAvailabilityDto {
-  @IsString()
-  @IsNotEmpty()
-  teacherId: string;
-
-  @IsInt()
-  @Min(0)
-  @Max(6)
-  dayOfWeek: number;
+export class AvailabilitySlotDto {
+  @IsDateString()
+  date: string;
 
   @IsString()
   @IsNotEmpty()
-  startTime: string; // e.g. "09:00"
+  startTime: string;
 
   @IsString()
   @IsNotEmpty()
-  endTime: string; // e.g. "17:00"
+  endTime: string;
 
   @IsString()
   @IsNotEmpty()
   timeZone: string;
+}
+
+
+export class CreateAvailabilityDto extends AvailabilitySlotDto {
+  @IsString()
+  @IsNotEmpty()
+  teacherId: string;
+}
+
+export class UpdateBulkAvailabilityDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AvailabilitySlotDto)
+  slots: AvailabilitySlotDto[];
+}
+
+export class CreateStudentAvailabilityDto extends AvailabilitySlotDto {
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
+}
+
+export class UpdateBulkStudentAvailabilityDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AvailabilitySlotDto)
+  slots: AvailabilitySlotDto[];
 }
 
 export class CreateSessionDto {
@@ -85,4 +109,91 @@ export class UpdateAttendanceDto {
   @IsString()
   @IsNotEmpty()
   status: string; // EXPECTED, PRESENT, ABSENT, EXCUSED
+}
+
+export class CreateClassRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  courseId: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
+export class ResolveClassRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  status: string; // RESOLVED, CANCELLED
+
+  @IsString()
+  @IsOptional()
+  resolvedById?: string;
+}
+
+export class ScheduleMatchedClassesDto {
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  courseId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  teacherId: string;
+
+  @IsString()
+  @IsOptional()
+  classRequestId?: string;
+
+  @IsInt()
+  @Min(1)
+  totalMinutesToConsume: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AvailabilitySlotDto)
+  slots: AvailabilitySlotDto[];
+
+  @IsDateString()
+  @IsNotEmpty()
+  startDate: string;
+}
+
+export class ReplicateAvailabilityDto {
+  @IsString()
+  @IsNotEmpty()
+  userId: string; // can be studentId or teacherId
+
+  @IsString()
+  @IsNotEmpty()
+  role: string; // 'TEACHER' or 'STUDENT'
+
+  @IsDateString()
+  @IsNotEmpty()
+  sourceStartDate: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  sourceEndDate: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  targetStartDate: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  targetEndDate: string;
+}
+
+export class EditScheduleDto {
+  studentId: string;
+  teacherId: string;
+  slots: { date: string; startTime: string; endTime: string }[];
 }

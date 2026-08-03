@@ -1,11 +1,46 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import { PrismaService } from '../prisma/prisma.service';
+import { ChatGateway } from '../chat/chat.gateway';
+import { CreateNotificationDto } from './dto/notifications.dto';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly mailerService: MailerService) {}
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly prisma: PrismaService,
+    private readonly chatGateway: ChatGateway,
+  ) {}
+
+  async create(data: CreateNotificationDto) {
+    const notification = await this.prisma.notification.create({ data });
+    this.chatGateway.emitNotification(data.userId, notification);
+    return notification;
+  }
+
+  async getUserNotifications(userId: string) {
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async markAsRead(id: string) {
+    return this.prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
+  }
+
+  async markAllAsRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+  }
 
   async sendWelcomeEmail(user: { email: string; name: string }) {
     try {

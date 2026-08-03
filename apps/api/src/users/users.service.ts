@@ -89,6 +89,10 @@ export class UsersService {
         firstName: true,
         lastName: true,
         createdAt: true,
+        teacherProfile: {
+          include: { courses: { include: { course: true } } },
+        },
+        studentProfile: true,
       },
     });
   }
@@ -102,7 +106,9 @@ export class UsersService {
             guardians: { include: { guardian: { include: { user: true } } } },
           },
         },
-        teacherProfile: true,
+        teacherProfile: {
+          include: { courses: { include: { course: true } } },
+        },
         guardianProfile: {
           include: {
             students: { include: { student: { include: { user: true } } } },

@@ -6,6 +6,7 @@ import {
   IsDateString,
   Max,
   Min,
+  IsBoolean,
 } from 'class-validator';
 
 export class CreateAssignmentDto {
@@ -150,4 +151,58 @@ export class CreateClassSummaryDto {
   @IsString()
   @IsOptional()
   privateNotes?: string;
+}
+
+export class CreateProgramDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
+export class UpdateProgramDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+}
+
+export class CreateCourseDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
+export class UpdateCourseDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+}
+
+export class AssignTeacherDto {
+  @IsString()
+  @IsNotEmpty()
+  teacherId: string;
 }

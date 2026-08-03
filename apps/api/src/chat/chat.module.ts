@@ -10,5 +10,6 @@ import { AuthModule } from '../auth/auth.module';
   imports: [PrismaModule, AuthModule, JwtModule.register({})],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway],
+  exports: [ChatGateway],
 })
 export class ChatModule {}

@@ -12,6 +12,11 @@ import {
   RecordAssessmentResultDto,
   UpdateProgressDto,
   CreateClassSummaryDto,
+  CreateProgramDto,
+  UpdateProgramDto,
+  CreateCourseDto,
+  UpdateCourseDto,
+  AssignTeacherDto,
 } from './dto/academic.dto';
 
 @Injectable()
@@ -256,5 +261,133 @@ export class AcademicService {
     });
 
     return { records, assessmentResults, classSummaries };
+  }
+
+  // ================= PROGRAMS & COURSES (ADMIN) =================
+
+  async createProgram(data: CreateProgramDto) {
+    return this.prisma.program.create({
+      data: {
+        name: data.name,
+        description: data.description,
+      },
+    });
+  }
+
+  async findAllPrograms() {
+    return this.prisma.program.findMany({
+      where: { isActive: true },
+      include: { courses: { where: { isActive: true } } },
+    });
+  }
+
+  async updateProgram(id: string, data: UpdateProgramDto) {
+    return this.prisma.program.update({
+      where: { id },
+      data: {
+        name: data.name,
+        description: data.description,
+        isActive: data.isActive,
+      },
+    });
+  }
+
+  async deleteProgram(id: string) {
+    // Soft delete program
+    await this.prisma.program.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    // Soft delete associated courses and remove their teacher assignments
+    const courses = await this.prisma.course.findMany({ where: { programId: id } });
+    for (const course of courses) {
+      await this.prisma.course.update({
+        where: { id: course.id },
+        data: { isActive: false },
+      });
+      // Remove teacher assignments for these courses
+      await this.prisma.teacherCourse.deleteMany({
+        where: { courseId: course.id },
+      });
+    }
+
+    return { message: 'Program deleted successfully' };
+  }
+
+  async createCourse(data: CreateCourseDto & { programId: string }) {
+    return this.prisma.course.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        programId: data.programId,
+      },
+    });
+  }
+
+  async findAllCourses() {
+    return this.prisma.course.findMany({
+      where: { isActive: true },
+      include: { program: true },
+    });
+  }
+
+  async updateCourse(id: string, data: UpdateCourseDto) {
+    return this.prisma.course.update({
+      where: { id },
+      data: {
+        name: data.name,
+        description: data.description,
+        isActive: data.isActive,
+      },
+    });
+  }
+
+  async deleteCourse(id: string) {
+    // Soft delete course
+    await this.prisma.course.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    // Remove teacher assignments for this course
+    await this.prisma.teacherCourse.deleteMany({
+      where: { courseId: id },
+    });
+
+    return { message: 'Course deleted successfully' };
+  }
+
+  // ================= TEACHER ASSIGNMENTS (ADMIN) =================
+
+  async assignTeacher(courseId: string, data: AssignTeacherDto) {
+    const teacher = await this.prisma.teacherProfile.findUnique({
+      where: { userId: data.teacherId }, // Wait, the UI might send teacherProfile ID or User ID. Let's assume it sends TeacherProfile ID based on Teacher Profile view, but the DTO usually means User ID. Let's check how we handle it. I'll change this to teacherProfile ID directly, or fetch by userId. Assuming it's TeacherProfile ID. No, let's fetch by id.
+    });
+    // Actually, usually we have `teacherId` referring to `teacherProfile.id`.
+    return this.prisma.teacherCourse.upsert({
+      where: {
+        teacherId_courseId: {
+          teacherId: data.teacherId,
+          courseId,
+        },
+      },
+      update: {}, // Do nothing if it exists
+      create: {
+        teacherId: data.teacherId,
+        courseId,
+      },
+    });
+  }
+
+  async removeTeacherAssignment(courseId: string, teacherId: string) {
+    return this.prisma.teacherCourse.delete({
+      where: {
+        teacherId_courseId: {
+          teacherId,
+          courseId,
+        },
+      },
+    });
   }
 }

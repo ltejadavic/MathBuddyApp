@@ -24,6 +24,7 @@ interface ProfileData {
   };
   teacherProfile?: {
     bio: string | null;
+    courses?: any[];
   };
 }
 
@@ -145,12 +146,43 @@ export default function ProfilePage() {
           )}
           
           {profile.role === 'TEACHER' && profile.teacherProfile && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white">About Me</h3>
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {profile.teacherProfile.bio || 'No biography provided.'}
-                </p>
+            <div className="space-y-6">
+              {profile.teacherProfile.courses && profile.teacherProfile.courses.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Courses Taught</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.teacherProfile.courses.map((tc: any, index: number) => {
+                      // Cycle through brand-approved aesthetic colors
+                      const colors = [
+                        "bg-[#00B9EE]/10 text-[#00B9EE] border-[#00B9EE]/20", // Cyan
+                        "bg-[#313745]/10 text-[#313745] dark:text-gray-200 border-[#313745]/20 dark:border-gray-700", // Dark Navy
+                        "bg-[#8DC63F]/10 text-[#6B962F] dark:text-[#8DC63F] border-[#8DC63F]/20", // Green
+                        "bg-[#FFDD00]/10 text-[#B39B00] dark:text-[#FFDD00] border-[#FFDD00]/20", // Yellow
+                        "bg-[#00BFFF]/10 text-[#00BFFF] border-[#00BFFF]/20", // Light Blue
+                        "bg-[#FF9B9B]/10 text-[#E65C5C] dark:text-[#FF9B9B] border-[#FF9B9B]/20", // Pink
+                      ];
+                      const colorClass = colors[index % colors.length];
+                      
+                      return (
+                        <span 
+                          key={tc.courseId} 
+                          className={`px-3 py-1 rounded-full text-xs font-semibold border ${colorClass}`}
+                        >
+                          {tc.course?.name || "Unknown Course"}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900 dark:text-white">About Me</h3>
+                <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {profile.teacherProfile.bio || 'No biography provided.'}
+                  </p>
+                </div>
               </div>
             </div>
           )}
