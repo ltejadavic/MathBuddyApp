@@ -1,18 +1,22 @@
 import {
   Controller,
-  Get, Put, Delete,
+  Get,
+  Put,
+  Delete,
   Post,
   Body,
   Patch,
   Param,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { SchedulingService } from '../scheduling.service';
 import {
   CreateSessionDto,
   UpdateSessionDto,
-  UpdateAttendanceDto, EditScheduleDto,
+  UpdateAttendanceDto,
+  EditScheduleDto,
   ScheduleMatchedClassesDto,
 } from '../dto/scheduling.dto';
 import { CompleteSessionDto } from '../dto/complete-session.dto';
@@ -39,7 +43,10 @@ export class SessionsController {
   }
 
   @Get()
-  async findAll(@Query('studentId') studentId?: string, @Query('teacherId') teacherId?: string): Promise<any> {
+  async findAll(
+    @Query('studentId') studentId?: string,
+    @Query('teacherId') teacherId?: string,
+  ): Promise<any> {
     return this.schedulingService.getSessions({ studentId, teacherId });
   }
 
@@ -75,21 +82,41 @@ export class SessionsController {
     return this.schedulingService.completeSession(id, completeSessionDto);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.TEACHER)
   @Get('schedules/list')
-  getSchedules(@Query('studentId') studentId: string, @Query('teacherId') teacherId: string) {
-    return this.schedulingService.getSchedules(studentId, teacherId);
+  getSchedules(
+    @Query('studentId') studentId: string,
+    @Query('teacherId') teacherId: string,
+    @Req() req: any,
+  ) {
+    return this.schedulingService.getSchedules(studentId, teacherId, req.user);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.TEACHER)
   @Put('schedules/:courseId')
-  updateSchedule(@Param('courseId') courseId: string, @Body() data: EditScheduleDto) {
-    return this.schedulingService.updateSchedule(courseId, data);
+  updateSchedule(
+    @Param('courseId') courseId: string,
+    @Body() data: EditScheduleDto,
+    @Req() req: any,
+  ) {
+    return this.schedulingService.updateSchedule(courseId, data, req.user);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.TEACHER)
   @Delete('schedules/:courseId')
-  deleteSchedule(@Param('courseId') courseId: string, @Query('studentId') studentId: string, @Query('teacherId') teacherId: string) {
-    return this.schedulingService.deleteSchedule(courseId, studentId, teacherId);
+  deleteSchedule(
+    @Param('courseId') courseId: string,
+    @Query('studentId') studentId: string,
+    @Query('teacherId') teacherId: string,
+    @Query('scheduleGroupId') scheduleGroupId: string,
+    @Req() req: any,
+  ) {
+    return this.schedulingService.deleteSchedule(
+      courseId,
+      studentId,
+      teacherId,
+      scheduleGroupId,
+      req.user,
+    );
   }
 }

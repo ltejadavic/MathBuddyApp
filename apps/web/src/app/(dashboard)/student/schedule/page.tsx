@@ -12,6 +12,8 @@ import { useCourses, useUsers, useCreateSession, useMyProfile } from "@/hooks/us
 import { useMyStudentAvailability, useUpdateStudentAvailability, useCreateClassRequest } from "@/hooks/use-scheduling-data";
 import { addDays, format, setHours, setMinutes, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { AvailabilityCalendar, AvailabilitySlot } from "@/components/calendar/AvailabilityCalendar";
+import { ScheduleCalendar } from "@/components/calendar/ScheduleCalendar";
+import { useQuery } from "@tanstack/react-query";
 import { apiClient as api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -27,6 +29,16 @@ export default function StudentSchedulePage() {
   const { data: availability } = useMyStudentAvailability();
   const updateAvailability = useUpdateStudentAvailability();
   const createClassRequest = useCreateClassRequest();
+
+  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery({
+    queryKey: ['student-sessions', profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return [];
+      const res = await api.get(`/sessions?studentId=${profile.id}`);
+      return res.data;
+    },
+    enabled: !!profile?.id
+  });
 
   // Availability calendar state
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
@@ -206,12 +218,28 @@ export default function StudentSchedulePage() {
         </p>
       </div>
 
-      <Tabs defaultValue="availability" className="w-full">
+      <Tabs defaultValue="schedule" className="w-full">
         <TabsList className="mb-4">
+          <TabsTrigger value="schedule">My Schedule</TabsTrigger>
           <TabsTrigger value="availability">My Availability</TabsTrigger>
-          <TabsTrigger value="book">Book a Class</TabsTrigger>
           <TabsTrigger value="request">Request Class</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="schedule">
+          <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+            <CardHeader>
+              <CardTitle>My Schedule</CardTitle>
+              <CardDescription>View your upcoming and past classes.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSessions ? (
+                <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
+              ) : (
+                <ScheduleCalendar sessions={sessions} />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="availability">
           <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
@@ -245,106 +273,6 @@ export default function StudentSchedulePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="book">
-          <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
-        <CardHeader>
-          <CardTitle>Available Slots</CardTitle>
-          <CardDescription>Select a time slot to book your class. Hours will be deducted automatically.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingCourses || isLoadingUsers ? (
-            <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
-          ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableSlots.map((slot: any) => (
-              <Card key={slot.id} className="rounded-lg border-gray-200 dark:border-gray-800 shadow-none hover:border-brand-cyan transition-colors">
-                <CardContent className="p-4 space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg">{slot.courseName}</h3>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <User className="w-4 h-4 mr-2" />
-                      {slot.teacherName}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex items-center text-sm">
-                      <CalendarIcon className="w-4 h-4 mr-2 text-brand-cyan" />
-                      {slot.date}
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <Clock className="w-4 h-4 mr-2 text-brand-cyan" />
-                      {slot.duration}
-                    </div>
-                  </div>
-
-                  <Dialog open={isDialogOpen && selectedSlot?.id === slot.id} onOpenChange={(open) => {
-                    setIsDialogOpen(open);
-                    if (open) setSelectedSlot(slot);
-                    else setSelectedSlot(null);
-                  }}>
-                    <DialogTrigger render={
-                      <Button 
-                        variant="outline" 
-                        className="w-full text-brand-cyan border-brand-cyan hover:bg-brand-cyan hover:text-white"
-                      />
-                    }>
-                      Book Slot
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>Confirm Booking</DialogTitle>
-                        <DialogDescription>
-                          Are you sure you want to book this class? 
-                          This action will deduct <strong>{slot.duration}</strong> from your active package balance.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="space-y-2 rounded-md bg-gray-50 dark:bg-gray-900 p-4 border border-gray-100 dark:border-gray-800">
-                          <p className="text-sm font-medium">Course: {selectedSlot?.courseName}</p>
-                          <p className="text-sm">Teacher: {selectedSlot?.teacherName}</p>
-                          <p className="text-sm">When: {selectedSlot?.date}</p>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={createSession.isPending}>Cancel</Button>
-                        <Button 
-                          className="bg-brand-cyan hover:bg-brand-cyan/90 text-white"
-                          disabled={createSession.isPending}
-                          onClick={() => {
-                            if (!selectedSlot?.courseId) {
-                                alert("Missing Course ID");
-                                return;
-                            }
-                            createSession.mutate({
-                              courseId: selectedSlot.courseId,
-                              teacherId: selectedSlot.teacherId,
-                              scheduledStartTime: selectedSlot.dateObj,
-                              scheduledEndTime: addDays(selectedSlot.dateObj, 0).setMinutes(selectedSlot.dateObj.getMinutes() + selectedSlot.durationMins), // Just add duration
-                              meetingLink: "https://zoom.us/j/mock",
-                              notes: "Booked by student"
-                            }, {
-                              onSuccess: () => {
-                                setIsDialogOpen(false);
-                                alert("Class booked successfully!");
-                              }
-                            });
-                          }}
-                        >
-                          {createSession.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                          Confirm Booking
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          )}
-        </CardContent>
-      </Card>
-        </TabsContent>
 
         <TabsContent value="request">
           <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">

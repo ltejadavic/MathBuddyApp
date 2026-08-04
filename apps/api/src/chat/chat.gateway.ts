@@ -73,7 +73,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Broadcast online status
     this.server.emit('presence_update', { userId, status: 'ONLINE' });
-    
+
     // Get all online users to send back to the connected client
     const onlineUsers = Array.from(this.userSockets.keys());
 
@@ -102,10 +102,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const message = await this.chatService.saveMessage(userId, payload);
 
     // Get thread participants to notify them even if they haven't joined the thread room actively
-    const participants = await this.chatService.getThreadParticipants(payload.threadId);
+    const participants = await this.chatService.getThreadParticipants(
+      payload.threadId,
+    );
     const rooms = [payload.threadId];
     if (participants) {
-      participants.forEach(p => rooms.push(`user_${p.userId}`));
+      participants.forEach((p) => rooms.push(`user_${p.userId}`));
     }
 
     // Broadcast to everyone in the thread and their personal rooms (including sender)
@@ -113,8 +115,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Create DB Notification for recipients (excluding sender)
     if (participants) {
-      const senderName = message.sender.firstName ? `${message.sender.firstName} ${message.sender.lastName || ''}`.trim() : 'alguien';
-      
+      const senderName = message.sender.firstName
+        ? `${message.sender.firstName} ${message.sender.lastName || ''}`.trim()
+        : 'alguien';
+
       for (const p of participants) {
         if (p.userId !== userId) {
           const notification = await this.prisma.notification.create({
@@ -123,11 +127,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
               title: 'Nuevo Mensaje',
               message: `Has recibido un nuevo mensaje de ${senderName}.`,
               type: 'SYSTEM',
-              link: `/messages`
-            }
+              link: `/messages`,
+            },
           });
           // Emit to recipient's personal room
-          this.server.to(`user_${p.userId}`).emit('new_notification', notification);
+          this.server
+            .to(`user_${p.userId}`)
+            .emit('new_notification', notification);
         }
       }
     }

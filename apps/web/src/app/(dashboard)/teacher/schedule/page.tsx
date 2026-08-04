@@ -6,12 +6,20 @@ import { useState, useEffect } from "react";
 import { useMyTeacherAvailability, useUpdateTeacherAvailability } from "@/hooks/use-scheduling-data";
 import { Loader2 } from "lucide-react";
 import { AvailabilityCalendar, AvailabilitySlot } from "@/components/calendar/AvailabilityCalendar";
+import { ScheduleCalendar } from "@/components/calendar/ScheduleCalendar";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, addDays, format } from "date-fns";
 import { apiClient as api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useMyTeacherSessions } from "@/hooks/use-teacher-data";
+import { TeacherEditSchedulePanel } from "./teacher-edit-schedule-panel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function TeacherSchedulePage() {
+  const [activeTab, setActiveTab] = useState("schedule");
+  const [editingSchedule, setEditingSchedule] = useState<{ scheduleGroupId: string, courseId: string, studentId: string } | null>(null);
+
+  const { data: sessions = [], isLoading: isLoadingSessions } = useMyTeacherSessions();
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const { data: availabilities, isLoading } = useMyTeacherAvailability();
   const updateAvailability = useUpdateTeacherAvailability();
@@ -157,52 +165,103 @@ export default function TeacherSchedulePage() {
     toast.success("Availability copied from previous month locally. Please click 'Save' to persist.");
   };
 
+  if (editingSchedule) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Edit Schedule
+          </h2>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+            Modify class times for your assigned student.
+          </p>
+        </div>
+        <TeacherEditSchedulePanel 
+          scheduleGroupId={editingSchedule.scheduleGroupId}
+          courseId={editingSchedule.courseId}
+          studentId={editingSchedule.studentId}
+          onCancel={() => setEditingSchedule(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Availability Calendar
+            Schedule & Availability
           </h2>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Set your exact availability for upcoming dates.
+            Manage your teaching schedule and set your available hours.
           </p>
         </div>
       </div>
 
-      <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Schedule</CardTitle>
-            <CardDescription>Click and drag on the calendar to mark your available time slots.</CardDescription>
-          </div>
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={() => {
-              if (window.confirm("Are you sure you want to clear all your availability from the screen? You must click 'Save' afterwards to apply the changes.")) {
-                setSlots([]);
-              }
-            }}
-          >
-            Clear All
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
-          ) : (
-            <AvailabilityCalendar 
-              initialSlots={slots}
-              onSlotsChange={setSlots}
-              isSaving={updateAvailability.isPending}
-              onSave={handleSave}
-              onReplicateWeek={handleReplicateWeek}
-              onReplicateMonth={handleReplicateMonth}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="schedule">My Schedule</TabsTrigger>
+          <TabsTrigger value="availability">My Availability</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="schedule">
+          <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+            <CardHeader>
+              <CardTitle>My Schedule</CardTitle>
+              <CardDescription>View your upcoming and past classes.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingSessions ? (
+                <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
+              ) : (
+                <ScheduleCalendar 
+                  sessions={sessions} 
+                  onEditSchedule={(scheduleGroupId, courseId, studentId) => {
+                    setEditingSchedule({ scheduleGroupId, courseId, studentId });
+                  }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="availability">
+          <Card className="rounded-xl shadow-sm border-gray-100 dark:border-gray-800">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Availability</CardTitle>
+                <CardDescription>Click and drag on the calendar to mark your available time slots.</CardDescription>
+              </div>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to clear all your availability from the screen? You must click 'Save' afterwards to apply the changes.")) {
+                    setSlots([]);
+                  }
+                }}
+              >
+                Clear All
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-brand-cyan" /></div>
+              ) : (
+                <AvailabilityCalendar 
+                  initialSlots={slots}
+                  onSlotsChange={setSlots}
+                  isSaving={updateAvailability.isPending}
+                  onSave={handleSave}
+                  onReplicateWeek={handleReplicateWeek}
+                  onReplicateMonth={handleReplicateMonth}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

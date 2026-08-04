@@ -19,15 +19,13 @@ import { AvailabilityCalendar, AvailabilitySlot } from "@/components/calendar/Av
 export function EditSchedulePanel() {
   const { data: users = [] } = useAllUsers();
   const students = users.filter((u: any) => u.role === "STUDENT");
-  const teachers = users.filter((u: any) => u.role === "TEACHER");
 
   const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [selectedTeacherId, setSelectedTeacherId] = useState("");
 
   const { data: schedules = [], isLoading: isLoadingSchedules } = useSchedules(selectedStudentId);
-  const { data: availability = [] } = useTeacherAvailability(selectedTeacherId);
-
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
+  const { data: availability = [] } = useTeacherAvailability(selectedSchedule?.teacher?.id || selectedSchedule?.teacher?.userId);
+
   const [selectedSlots, setSelectedSlots] = useState<AvailabilitySlot[]>([]);
   const [targetHours, setTargetHours] = useState<number>(0);
 
@@ -35,13 +33,8 @@ export function EditSchedulePanel() {
   const deleteSchedule = useDeleteSchedule();
 
   const activeStudents = students.filter((s: any) => !s.deletedAt);
-  const activeTeachers = teachers.filter((t: any) => 
-    !t.deletedAt && schedules.some((s: any) => s.teacher?.id === t.teacherProfile?.id || s.teacher?.userId === t.id)
-  );
 
-  const displayedSchedules = selectedTeacherId 
-    ? schedules.filter((s: any) => s.teacher?.id === selectedTeacherId || s.teacher?.userId === selectedTeacherId)
-    : schedules;
+  const displayedSchedules = schedules;
 
   // Map availability to true overlaps (green blocks)
   const trueOverlaps = availability.flatMap((avail: any) => {
@@ -101,7 +94,8 @@ export function EditSchedulePanel() {
         courseId: selectedSchedule.course.id, 
         data: { 
           studentId: selectedStudentId, 
-          teacherId: selectedTeacherId, 
+          teacherId: selectedSchedule.teacher?.id, 
+          scheduleGroupId: selectedSchedule.scheduleGroupId,
           slots: selectedSlots 
         } 
       },
@@ -120,7 +114,8 @@ export function EditSchedulePanel() {
       { 
         courseId: selectedSchedule.course.id, 
         studentId: selectedStudentId, 
-        teacherId: selectedTeacherId 
+        teacherId: selectedSchedule.teacher?.id,
+        scheduleGroupId: selectedSchedule.scheduleGroupId
       },
       {
         onSuccess: () => {
@@ -150,23 +145,6 @@ export function EditSchedulePanel() {
             ))}
           </select>
         </div>
-        <div>
-          <label className="text-sm font-medium mb-1 block">Select Teacher</label>
-          <select 
-            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan dark:border-gray-700 dark:bg-gray-800"
-            value={selectedTeacherId}
-            onChange={(e) => {
-              setSelectedTeacherId(e.target.value);
-              setSelectedSchedule(null);
-            }}
-            disabled={!selectedStudentId}
-          >
-            <option value="">-- Choose a teacher --</option>
-            {activeTeachers.map((t: any) => (
-              <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {selectedStudentId && !selectedSchedule && (
@@ -185,7 +163,7 @@ export function EditSchedulePanel() {
 
                 return (
                   <Card 
-                    key={`${schedule.course.id}-${schedule.teacher?.id}`} 
+                    key={schedule.scheduleGroupId || `${schedule.course.id}-${schedule.teacher?.id}`} 
                     className="cursor-pointer hover:shadow-md transition-shadow border-brand-cyan/20"
                     onClick={() => handleSelectSchedule(schedule)}
                   >
@@ -199,6 +177,11 @@ export function EditSchedulePanel() {
                       </div>
                       <h4 className="font-semibold text-lg pr-20">{schedule.course.name}</h4>
                       <p className="text-sm text-muted-foreground">{schedule.course.program.name}</p>
+                      
+                      <div className="mt-2 text-sm">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Teacher: </span>
+                        <span>{schedule.teacher?.user?.firstName} {schedule.teacher?.user?.lastName}</span>
+                      </div>
                       
                       <div className="mt-3 text-sm">
                         <span className="text-gray-500">Date Range: </span>
@@ -269,7 +252,12 @@ export function EditSchedulePanel() {
               <Button 
                 variant="destructive" 
                 onClick={handleDelete}
-                disabled={deleteSchedule.isPending || updateSchedule.isPending}
+                disabled={
+                  deleteSchedule.isPending || 
+                  updateSchedule.isPending || 
+                  (selectedSchedule && !selectedSchedule.sessions.some((s: any) => new Date(s.scheduledStartTime) > new Date()))
+                }
+                title={selectedSchedule && !selectedSchedule.sessions.some((s: any) => new Date(s.scheduledStartTime) > new Date()) ? "Completed packages cannot be deleted to preserve history." : ""}
               >
                 Delete Schedule
               </Button>

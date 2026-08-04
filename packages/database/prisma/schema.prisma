@@ -270,6 +270,8 @@ model ClassSession {
   status             String   @default("SCHEDULED")
   meetingLink        String?
   notes              String?
+  scheduleGroupId    String?
+
   
   attendances        ClassAttendance[]
   hourTransactions   HourTransaction[]

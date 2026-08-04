@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,11 @@ export function MatchmakingPanel({
   
   const [selectedSlots, setSelectedSlots] = useState<AvailabilitySlot[]>([]);
 
+  useEffect(() => {
+    if (prefilledStudentId) setSelectedStudentId(prefilledStudentId);
+    if (prefilledCourseId) setSelectedCourseId(prefilledCourseId);
+  }, [prefilledStudentId, prefilledCourseId]);
+
   const { data: users = [] } = useAllUsers();
   const { data: courses = [] } = useAllCourses();
   
@@ -46,6 +51,20 @@ export function MatchmakingPanel({
 
   const { data: matchData, isLoading: isMatchLoading } = useMatchmakingAvailability(selectedStudentId, selectedTeacherId);
   const scheduleClasses = useScheduleMatchedClasses();
+
+  const studentConflicts = useMemo(() => {
+    if (!matchData?.studentSessions) return [];
+    return matchData.studentSessions.map((sess: any) => {
+      const d = new Date(sess.scheduledStartTime);
+      const e = new Date(sess.scheduledEndTime);
+      return {
+        date: format(d, "yyyy-MM-dd"),
+        startTime: format(d, "HH:mm"),
+        endTime: format(e, "HH:mm"),
+        courseName: sess.course?.name || "Busy"
+      };
+    });
+  }, [matchData?.studentSessions]);
 
   // True Overlaps calculation
   const trueOverlaps = useMemo(() => {
@@ -344,8 +363,8 @@ export function MatchmakingPanel({
           <label className="text-sm font-medium mb-1 block">Student</label>
           <Select 
             value={selectedStudentId} 
-            onValueChange={(val) => setSelectedStudentId(val || "")}
-            disabled={!!prefilledStudentId}
+            onValueChange={(val) => { setSelectedStudentId(val || ""); setSelectedSlots([]); }}
+            disabled={!!classRequestId}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select student">
@@ -366,8 +385,8 @@ export function MatchmakingPanel({
           <label className="text-sm font-medium mb-1 block">Course</label>
           <Select 
             value={selectedCourseId} 
-            onValueChange={(val) => { setSelectedCourseId(val || ""); setSelectedTeacherId(""); }}
-            disabled={!!prefilledCourseId}
+            onValueChange={(val) => { setSelectedCourseId(val || ""); setSelectedTeacherId(""); setSelectedSlots([]); }}
+            disabled={!!classRequestId}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select course">
@@ -457,6 +476,7 @@ export function MatchmakingPanel({
               onReplicateMonth={handleReplicateMonth}
               isSaving={scheduleClasses.isPending}
               availableBlocks={trueOverlaps}
+              studentConflicts={studentConflicts}
               maxHours={Number(hoursToConsume)}
             />
           </div>

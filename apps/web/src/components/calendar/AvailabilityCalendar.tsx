@@ -24,6 +24,12 @@ interface AvailabilityCalendarProps {
   onSave?: () => void;
   onReplicateWeek?: (dateInWeek: Date) => void;
   onReplicateMonth?: (dateInMonth: Date) => void;
+  studentConflicts?: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    courseName?: string;
+  }[];
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -37,6 +43,7 @@ export function AvailabilityCalendar({
   onReplicateMonth,
   availableBlocks,
   maxHours,
+  studentConflicts = [],
 }: AvailabilityCalendarProps) {
   const [slots, setSlots] = useState<AvailabilitySlot[]>(initialSlots);
   const calendarRef = useRef<FullCalendar>(null);
@@ -72,6 +79,21 @@ export function AvailabilityCalendar({
     });
   }
 
+  if (studentConflicts.length > 0) {
+    studentConflicts.forEach((conflict, idx) => {
+      events.push({
+        id: `conflict-${idx}`,
+        start: `${conflict.date}T${conflict.startTime}:00`,
+        end: `${conflict.date}T${conflict.endTime}:00`,
+        backgroundColor: "rgba(239, 68, 68, 0.8)", // red-500
+        borderColor: "rgba(220, 38, 38, 1)", // red-600
+        title: conflict.courseName || "Busy",
+        display: "block",
+        extendedProps: { isConflict: true }
+      } as any);
+    });
+  }
+
 
   const handleSelect = (info: any) => {
     const start = info.start;
@@ -100,6 +122,24 @@ export function AvailabilityCalendar({
           calendarRef.current?.getApi()?.unselect();
           return;
         }
+      }
+    }
+
+    if (studentConflicts.length > 0) {
+      const selectionStart = start.getTime();
+      const selectionEnd = end.getTime();
+      
+      const hasConflict = studentConflicts.some(conflict => {
+        const conflictStart = new Date(`${conflict.date}T${conflict.startTime}:00`).getTime();
+        const conflictEnd = new Date(`${conflict.date}T${conflict.endTime}:00`).getTime();
+        // A conflict occurs if the selected slot overlaps with the conflict block
+        return selectionStart < conflictEnd && selectionEnd > conflictStart;
+      });
+
+      if (hasConflict) {
+        alert("This time overlaps with the student's existing classes.");
+        calendarRef.current?.getApi()?.unselect();
+        return;
       }
     }
 
@@ -136,6 +176,10 @@ export function AvailabilityCalendar({
   };
 
   const handleEventClick = (info: any) => {
+    if (info.event.extendedProps.isBackground || info.event.extendedProps.isConflict) {
+      return;
+    }
+
     if (window.confirm("Do you want to delete this availability slot?")) {
       const eventId = info.event.id;
       const newSlots = slots.filter((s, idx) => (s.id || `slot-${idx}`) !== eventId);
@@ -167,6 +211,23 @@ export function AvailabilityCalendar({
           >
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
+        )}
+      </div>
+
+      <div className="flex gap-6 items-center text-sm px-2 text-gray-600 dark:text-gray-300">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-sm bg-[rgba(34,197,94,0.2)] border border-[rgba(34,197,94,0.5)]"></div>
+          <span>Shared Availability</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-sm bg-[hsl(194,96%,42%)] border border-[hsl(194,96%,32%)]"></div>
+          <span>Selected Hours</span>
+        </div>
+        {studentConflicts.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-sm bg-[rgba(239,68,68,0.8)] border border-[rgba(220,38,38,1)]"></div>
+            <span>Student Busy (Other Classes)</span>
+          </div>
         )}
       </div>
       

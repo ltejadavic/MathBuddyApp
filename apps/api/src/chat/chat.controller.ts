@@ -5,7 +5,6 @@ import {
   Param,
   Body,
   UseGuards,
-  Request,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -25,7 +24,10 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post('threads')
-  async createThread(@Req() req: any, @Body() createThreadDto: CreateThreadDto) {
+  async createThread(
+    @Req() req: any,
+    @Body() createThreadDto: CreateThreadDto,
+  ) {
     return this.chatService.createThread(req.user.sub, createThreadDto);
   }
 

@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { SchedulingService } from '../scheduling.service';
-import { UpdateBulkAvailabilityDto, UpdateBulkStudentAvailabilityDto } from '../dto/scheduling.dto';
+import {
+  UpdateBulkAvailabilityDto,
+  UpdateBulkStudentAvailabilityDto,
+} from '../dto/scheduling.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -17,10 +28,11 @@ export class AvailabilityController {
     @Request() req: any,
     @Body() dto: UpdateBulkAvailabilityDto,
   ): Promise<any> {
-    return this.schedulingService.updateAvailability(req.user.sub || req.user.id, dto);
+    return this.schedulingService.updateAvailability(
+      req.user.sub || req.user.id,
+      dto,
+    );
   }
-
-
 
   @Get('teacher/:teacherId')
   async findOne(@Param('teacherId') teacherId: string): Promise<any> {
@@ -33,7 +45,10 @@ export class AvailabilityController {
     @Request() req: any,
     @Body() dto: UpdateBulkStudentAvailabilityDto,
   ): Promise<any> {
-    return this.schedulingService.updateStudentAvailability(req.user.sub || req.user.id, dto);
+    return this.schedulingService.updateStudentAvailability(
+      req.user.sub || req.user.id,
+      dto,
+    );
   }
 
   @Get('student/:studentId')
@@ -47,6 +62,9 @@ export class AvailabilityController {
     @Param('studentId') studentId: string,
     @Param('teacherId') teacherId: string,
   ): Promise<any> {
-    return this.schedulingService.getMatchmakingAvailability(studentId, teacherId);
+    return this.schedulingService.getMatchmakingAvailability(
+      studentId,
+      teacherId,
+    );
   }
 }

@@ -4,10 +4,9 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  Max,
   Min,
   ValidateNested,
-  IsArray
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -27,7 +26,6 @@ export class AvailabilitySlotDto {
   @IsNotEmpty()
   timeZone: string;
 }
-
 
 export class CreateAvailabilityDto extends AvailabilitySlotDto {
   @IsString()
@@ -195,5 +193,6 @@ export class ReplicateAvailabilityDto {
 export class EditScheduleDto {
   studentId: string;
   teacherId: string;
+  scheduleGroupId: string;
   slots: { date: string; startTime: string; endTime: string }[];
 }

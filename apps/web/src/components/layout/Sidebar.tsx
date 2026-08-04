@@ -51,7 +51,7 @@ export function SidebarContent() {
 
   const studentLinks = [
     { name: "Dashboard", href: "/student", icon: LayoutDashboard },
-    { name: "Book Classes", href: "/student/schedule", icon: CalendarDays },
+    { name: "My Schedule", href: "/student/schedule", icon: CalendarDays },
     { name: "Class History", href: "/student/history", icon: History },
     { name: "Resources", href: "/student/resources", icon: FolderOpen },
     { name: "Profile", href: "/student/profile", icon: UserCircle },

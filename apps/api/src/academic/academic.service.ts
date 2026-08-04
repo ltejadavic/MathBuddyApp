@@ -300,7 +300,9 @@ export class AcademicService {
     });
 
     // Soft delete associated courses and remove their teacher assignments
-    const courses = await this.prisma.course.findMany({ where: { programId: id } });
+    const courses = await this.prisma.course.findMany({
+      where: { programId: id },
+    });
     for (const course of courses) {
       await this.prisma.course.update({
         where: { id: course.id },
@@ -361,9 +363,6 @@ export class AcademicService {
   // ================= TEACHER ASSIGNMENTS (ADMIN) =================
 
   async assignTeacher(courseId: string, data: AssignTeacherDto) {
-    const teacher = await this.prisma.teacherProfile.findUnique({
-      where: { userId: data.teacherId }, // Wait, the UI might send teacherProfile ID or User ID. Let's assume it sends TeacherProfile ID based on Teacher Profile view, but the DTO usually means User ID. Let's check how we handle it. I'll change this to teacherProfile ID directly, or fetch by userId. Assuming it's TeacherProfile ID. No, let's fetch by id.
-    });
     // Actually, usually we have `teacherId` referring to `teacherProfile.id`.
     return this.prisma.teacherCourse.upsert({
       where: {

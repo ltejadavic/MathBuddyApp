@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateThreadDto, SendMessageDto } from './dto/chat.dto';
 
@@ -19,44 +23,66 @@ export class ChatService {
     if (user.role === 'ADMIN') {
       return this.prisma.user.findMany({
         where: { id: { not: userId } },
-        select: { id: true, email: true, role: true, firstName: true, lastName: true },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          firstName: true,
+          lastName: true,
+        },
       });
     }
 
     if (user.role === 'STUDENT') {
       const enrollments = await this.prisma.enrollment.findMany({
         where: { student: { userId: userId }, status: 'ACTIVE' },
-        include: { course: { include: { teacherAssignments: { include: { teacher: true } } } } },
+        include: {
+          course: {
+            include: { teacherAssignments: { include: { teacher: true } } },
+          },
+        },
       });
 
       const teacherIds = new Set<string>();
-      enrollments.forEach(e => {
-        e.course.teacherAssignments.forEach(ta => {
+      enrollments.forEach((e) => {
+        e.course.teacherAssignments.forEach((ta) => {
           teacherIds.add(ta.teacher.userId);
         });
       });
 
       return this.prisma.user.findMany({
         where: {
-          OR: [
-            { role: 'ADMIN' },
-            { id: { in: Array.from(teacherIds) } },
-          ],
+          OR: [{ role: 'ADMIN' }, { id: { in: Array.from(teacherIds) } }],
           id: { not: userId },
         },
-        select: { id: true, email: true, role: true, firstName: true, lastName: true },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          firstName: true,
+          lastName: true,
+        },
       });
     }
 
     if (user.role === 'TEACHER') {
       const teacherCourses = await this.prisma.teacherCourse.findMany({
         where: { teacher: { userId: userId } },
-        include: { course: { include: { enrollments: { where: { status: 'ACTIVE' }, include: { student: true } } } } },
+        include: {
+          course: {
+            include: {
+              enrollments: {
+                where: { status: 'ACTIVE' },
+                include: { student: true },
+              },
+            },
+          },
+        },
       });
 
       const studentIds = new Set<string>();
-      teacherCourses.forEach(tc => {
-        tc.course.enrollments.forEach(e => {
+      teacherCourses.forEach((tc) => {
+        tc.course.enrollments.forEach((e) => {
           studentIds.add(e.student.userId);
         });
       });
@@ -70,7 +96,13 @@ export class ChatService {
           ],
           id: { not: userId },
         },
-        select: { id: true, email: true, role: true, firstName: true, lastName: true },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          firstName: true,
+          lastName: true,
+        },
       });
     }
 
@@ -80,19 +112,25 @@ export class ChatService {
   async createThread(userId: string, data: CreateThreadDto) {
     // Check if the user is authorized to chat with all participants
     const contactableUsers = await this.getContactableUsers(userId);
-    const contactableIds = new Set(contactableUsers.map(u => u.id));
+    const contactableIds = new Set(contactableUsers.map((u) => u.id));
 
     // Exclude the user themselves from the check, just in case they added themselves
-    const otherParticipants = data.participantUserIds.filter(id => id !== userId);
+    const otherParticipants = data.participantUserIds.filter(
+      (id) => id !== userId,
+    );
 
     for (const participantId of otherParticipants) {
       if (!contactableIds.has(participantId)) {
-        throw new ForbiddenException(`You are not authorized to chat with user ${participantId}`);
+        throw new ForbiddenException(
+          `You are not authorized to chat with user ${participantId}`,
+        );
       }
     }
 
     // Ensure the creator is included
-    const allParticipantIds = Array.from(new Set([...data.participantUserIds, userId]));
+    const allParticipantIds = Array.from(
+      new Set([...data.participantUserIds, userId]),
+    );
 
     // Check if a direct thread already exists between these EXACT participants
     if (data.type === 'DIRECT' && allParticipantIds.length === 2) {
@@ -139,7 +177,17 @@ export class ChatService {
       where: { id: { in: threadIds } },
       include: {
         participants: {
-          include: { user: { select: { id: true, email: true, role: true, firstName: true, lastName: true } } },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
         },
         messages: {
           orderBy: { createdAt: 'desc' },
@@ -168,7 +216,15 @@ export class ChatService {
       where: { threadId },
       orderBy: { createdAt: 'asc' },
       include: {
-        sender: { select: { id: true, email: true, role: true, firstName: true, lastName: true } },
+        sender: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
   }
@@ -192,7 +248,15 @@ export class ChatService {
         attachmentUrl: data.attachmentUrl,
       },
       include: {
-        sender: { select: { id: true, email: true, role: true, firstName: true, lastName: true } },
+        sender: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
 
@@ -233,41 +297,65 @@ export class ChatService {
         mimeType: file.mimetype,
         sizeBytes: file.size,
         uploaderId: userId,
-      }
+      },
     });
   }
 
   async getStaffDirectory() {
     const staff = await this.prisma.user.findMany({
       where: { role: 'ADMIN', deletedAt: null },
-      select: { id: true, email: true, role: true, firstName: true, lastName: true },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+      },
     });
-    return staff.map(s => ({ ...s, isActive: true }));
+    return staff.map((s) => ({ ...s, isActive: true }));
   }
 
   async getTeachersDirectory(userId: string, userRole: string) {
     if (userRole === 'ADMIN' || userRole === 'TEACHER') {
       const teachers = await this.prisma.user.findMany({
         where: { role: 'TEACHER', deletedAt: null },
-        select: { id: true, email: true, role: true, firstName: true, lastName: true },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          firstName: true,
+          lastName: true,
+        },
       });
-      return teachers.map(t => ({ ...t, isActive: true }));
+      return teachers.map((t) => ({ ...t, isActive: true }));
     }
 
     if (userRole === 'STUDENT') {
       const enrollments = await this.prisma.enrollment.findMany({
         where: { student: { userId: userId }, status: 'ACTIVE' },
-        include: { course: { include: { teacherAssignments: { include: { teacher: { include: { user: true } } } } } } },
+        include: {
+          course: {
+            include: {
+              teacherAssignments: {
+                include: { teacher: { include: { user: true } } },
+              },
+            },
+          },
+        },
       });
 
       const teacherMap = new Map<string, any>();
-      enrollments.forEach(e => {
-        e.course.teacherAssignments.forEach(ta => {
+      enrollments.forEach((e) => {
+        e.course.teacherAssignments.forEach((ta) => {
           const t = ta.teacher.user;
           if (t && !t.deletedAt && !teacherMap.has(t.id)) {
             teacherMap.set(t.id, {
-              id: t.id, email: t.email, role: t.role, firstName: t.firstName, lastName: t.lastName,
-              isActive: true
+              id: t.id,
+              email: t.email,
+              role: t.role,
+              firstName: t.firstName,
+              lastName: t.lastName,
+              isActive: true,
             });
           }
         });
@@ -283,14 +371,20 @@ export class ChatService {
     if (userRole === 'ADMIN') {
       const students = await this.prisma.user.findMany({
         where: { role: 'STUDENT', deletedAt: null },
-        select: { 
-          id: true, email: true, role: true, firstName: true, lastName: true,
-          studentProfile: { include: { enrollments: true } }
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          firstName: true,
+          lastName: true,
+          studentProfile: { include: { enrollments: true } },
         },
       });
-      return students.map(s => {
+      return students.map((s) => {
         const { studentProfile, ...rest } = s;
-        const isActive = studentProfile?.enrollments.some(e => e.status === 'ACTIVE') || false;
+        const isActive =
+          studentProfile?.enrollments.some((e) => e.status === 'ACTIVE') ||
+          false;
         return { ...rest, isActive };
       });
     }
@@ -298,21 +392,33 @@ export class ChatService {
     if (userRole === 'TEACHER') {
       const teacherCourses = await this.prisma.teacherCourse.findMany({
         where: { teacher: { userId: userId } },
-        include: { course: { include: { enrollments: { include: { student: { include: { user: true } } } } } } },
+        include: {
+          course: {
+            include: {
+              enrollments: {
+                include: { student: { include: { user: true } } },
+              },
+            },
+          },
+        },
       });
 
       const studentMap = new Map<string, any>();
-      teacherCourses.forEach(tc => {
-        tc.course.enrollments.forEach(e => {
+      teacherCourses.forEach((tc) => {
+        tc.course.enrollments.forEach((e) => {
           const s = e.student.user;
           if (!s || s.deletedAt) return;
-          
+
           const existing = studentMap.get(s.id);
           const isActive = e.status === 'ACTIVE';
           if (!existing) {
             studentMap.set(s.id, {
-              id: s.id, email: s.email, role: s.role, firstName: s.firstName, lastName: s.lastName,
-              isActive: isActive
+              id: s.id,
+              email: s.email,
+              role: s.role,
+              firstName: s.firstName,
+              lastName: s.lastName,
+              isActive: isActive,
             });
           } else {
             existing.isActive = existing.isActive || isActive;

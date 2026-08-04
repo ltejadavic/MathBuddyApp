@@ -1,6 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { SchedulingService } from '../scheduling.service';
-import { CreateClassRequestDto, ResolveClassRequestDto } from '../dto/scheduling.dto';
+import {
+  CreateClassRequestDto,
+  ResolveClassRequestDto,
+} from '../dto/scheduling.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -19,7 +32,10 @@ export class RequestsController {
 
   @Roles(Role.ADMIN)
   @Get()
-  async findAll(@Query('status') status?: string, @Query('studentId') studentId?: string) {
+  async findAll(
+    @Query('status') status?: string,
+    @Query('studentId') studentId?: string,
+  ) {
     return this.schedulingService.getClassRequests({ status, studentId });
   }
 

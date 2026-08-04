@@ -158,7 +158,7 @@ export class UsersService {
       include: {
         studentProfile: true,
         teacherProfile: {
-          include: { courses: { include: { course: true } } }
+          include: { courses: { include: { course: true } } },
         },
       },
     });
@@ -173,7 +173,7 @@ export class UsersService {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, refreshTokenHash, email, ...publicData } = targetUser;
-    
+
     let returnedEmail = email;
 
     // Role-specific data exposure

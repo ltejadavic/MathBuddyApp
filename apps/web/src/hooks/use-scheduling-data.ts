@@ -159,6 +159,16 @@ export function useScheduleMatchedClasses() {
   });
 }
 
+export function useAllSessions() {
+  return useQuery({
+    queryKey: ['all-sessions'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/sessions');
+      return data;
+    },
+  });
+}
+
 export function useSchedules(studentId?: string, teacherId?: string) {
   return useQuery({
     queryKey: ['schedules', studentId, teacherId],
@@ -183,6 +193,7 @@ export function useUpdateSchedule() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['my-teacher-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-availability'] });
       toast.success('Schedule updated successfully');
     },
@@ -195,8 +206,8 @@ export function useUpdateSchedule() {
 export function useDeleteSchedule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ courseId, studentId, teacherId }: { courseId: string, studentId: string, teacherId: string }) => {
-      const res = await apiClient.delete(`/sessions/schedules/${courseId}`, { params: { studentId, teacherId } });
+    mutationFn: async ({ courseId, studentId, teacherId, scheduleGroupId }: { courseId: string, studentId: string, teacherId: string, scheduleGroupId: string }) => {
+      const res = await apiClient.delete(`/sessions/schedules/${courseId}`, { params: { studentId, teacherId, scheduleGroupId } });
       return res.data;
     },
     onSuccess: (_, variables) => {
